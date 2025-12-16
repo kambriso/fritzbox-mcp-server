@@ -34,6 +34,10 @@ FRITZ_USERNAME=your-username
 FRITZ_PASSWORD=your-password
 ```
 
+## Technical Notes
+
+This server uses the community MCP SDK ([mark3labs/mcp-go](https://github.com/mark3labs/mcp-go)) instead of the official SDK due to Claude Code compatibility issues. The official SDK (modelcontextprotocol/go-sdk) has known issues with tool detection in Claude Code ([#395](https://github.com/modelcontextprotocol/go-sdk/issues/395), [#200](https://github.com/modelcontextprotocol/go-sdk/issues/200)) related to initialization timing and schema generation.
+
 ## License
 
 Business Source License 1.1 - See [LICENSE](LICENSE) for details.
