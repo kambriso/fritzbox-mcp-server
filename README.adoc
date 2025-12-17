@@ -1,0 +1,523 @@
+= FRITZ!Box MCP Server
+
+A secure Model Context Protocol (MCP) server for interacting with AVM FRITZ!Box routers through AI assistants like Claude.
+
+== Security First
+
+[IMPORTANT]
+====
+*Your FRITZ!Box credentials NEVER leave your machine.*
+
+This MCP server runs entirely locally on your machine. Your credentials are stored in a local `.env` file and are only used to communicate with your FRITZ!Box on your local network. The AI assistant receives only the results of API calls, never your credentials.
+====
+
+== Features
+
+* **Runtime-driven & Model-agnostic**: No hardcoded service structures, works with all FRITZ!Box models and firmware versions
+* **Automatic Discovery**: Discovers capabilities dynamically from your FRITZ!Box's TR-064 descriptors
+* **Secure by Design**: Credentials never leave your local machine
+* **Comprehensive Coverage**: Access to all TR-064 services (DeviceInfo, WAN, WLAN, Hosts, VoIP, DECT, Smart Home, etc.)
+
+Tested with FRITZ!Box 7490 and 7590.
+
+== Installation
+
+=== Download Pre-built Binary
+
+Download the latest release for your platform from the https://github.com/kambriso/fritzbox-mcp-server/releases[Releases page]:
+
+* **Linux**: `fritzbox-mcp-server-linux-amd64` or `fritzbox-mcp-server-linux-arm64`
+* **macOS**: `fritzbox-mcp-server-darwin-amd64` or `fritzbox-mcp-server-darwin-arm64`
+* **Windows**: `fritzbox-mcp-server-windows-amd64.exe` or `fritzbox-mcp-server-windows-arm64.exe`
+
+Make the binary executable (Linux/macOS):
+[source,bash]
+----
+chmod +x fritzbox-mcp-server-*
+----
+
+== Configuration
+
+=== Setup Credentials
+
+Create a configuration file with your FRITZ!Box credentials:
+
+*Global config (recommended for MCP clients):*
+
+[source,bash]
+----
+mkdir -p ~/.config/fritzbox-mcp-server
+# Create ~/.config/fritzbox-mcp-server/.env with the following content:
+----
+
+*Local config (for testing):*
+
+[source,bash]
+----
+# Create .env in the same directory as the binary
+----
+
+Configuration file format (`.env`):
+
+[source,bash]
+----
+FRITZ_HOST=fritz.box          # Required: FRITZ!Box hostname or IP address
+FRITZ_PORT=49000              # Optional: TR-064 port (default: 49000)
+FRITZ_USERNAME=your-username  # Required: FRITZ!Box username
+FRITZ_PASSWORD=your-password  # Required: FRITZ!Box password
+----
+
+[WARNING]
+====
+* The `.env` file contains sensitive credentials
+* Set file permissions to restrict access: `chmod 600 ~/.config/fritzbox-mcp-server/.env`
+* Never commit credentials to version control
+====
+
+=== FRITZ!Box User Permissions
+
+The FRITZ!Box user account must have **FRITZ!Box-Einstellungen** permission enabled:
+
+* *German*: "Der Benutzer kann alle Einstellungen der FRITZ!Box sehen und bearbeiten"
+* *English*: "The user can view and edit all FRITZ!Box settings"
+
+To configure:
+
+1. Open FRITZ!Box web interface (http://fritz.box)
+2. Navigate to: `System → FRITZ!Box-Benutzer → [Your User] → Berechtigungen`
+3. Enable the checkbox for *FRITZ!Box-Einstellungen*
+
+[IMPORTANT]
+====
+Without this permission, the MCP server cannot access TR-064 services and will fail to connect.
+====
+
+=== Configuration Lookup Order
+
+The server looks for configuration in this order:
+
+1. Current directory: `./.env`
+2. Global config: `~/.config/fritzbox-mcp-server/.env`
+3. Custom location via `XDG_CONFIG_HOME`: `$XDG_CONFIG_HOME/fritzbox-mcp-server/.env`
+
+== Using with Claude Desktop
+
+Add this to your Claude Desktop configuration file:
+
+* **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+* **Linux**: `~/.config/claude/claude_desktop_config.json`
+* **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+[source,json]
+----
+{
+  "mcpServers": {
+    "fritzbox": {
+      "command": "/absolute/path/to/fritzbox-mcp-server"
+    }
+  }
+}
+----
+
+[TIP]
+====
+* Use the **absolute path** to the binary
+* On macOS/Linux, you can use `pwd` to get the current directory path
+* After updating the config, restart Claude Desktop
+====
+
+== Available Tools
+
+The server provides comprehensive access to your FRITZ!Box:
+
+=== Discovery Tools
+
+* `list_services` - List all TR-064 services available
+* `list_actions` - List all actions for a specific service
+* `describe_action` - Get detailed action information
+
+=== Execution Tools
+
+* `call_action` - Execute any TR-064 action dynamically
+
+=== Auto-Generated Convenience Tools
+
+The server automatically registers all read-only GET actions from all services.
+
+**Common examples:**
+
+* `deviceinfo_getinfo` - Device model, firmware, serial, uptime
+* `wlanconfig_getinfo` - WiFi SSID, security, channel
+* `wanipconn_getinfo` - WAN IP connection status and external IP
+* `hosts_gethostlistpath` - List of network hosts
+* `x_avm-de_homeauto_gethomeautoswitchcount` - Smart home device count
+* And many more...
+
+[NOTE]
+====
+Use `list_services` and `list_actions` in Claude to discover what's available on your specific FRITZ!Box model.
+====
+
+== Example Usage
+
+=== Quick Queries
+
+Ask Claude:
+
+* "What's my current external IP address?"
+* "Show me all devices connected to my WiFi"
+* "What's my current internet connection speed?"
+* "How long has my FRITZ!Box been running?"
+* "List all available FRITZ!Box services"
+
+=== Sample Interactions
+
+==== Basic Query: Device Information
+
+Prompt:
+[source,text]
+----
+show fritzbox device info
+----
+
+Claude retrieves comprehensive device information including model, firmware version, uptime, current connection status with IPv4/IPv6 addresses, DSL speeds, DNS servers, and recent connection logs.
+
+Example output structure:
+[source,text]
+----
+Model: FRITZ!Box 7590
+Firmware Version: 154.08.20
+Uptime: 2,171,166 seconds (~25 days)
+IPv4: 198.51.100.42
+DSL Speed: 100,000/40,000 kbit/s (download/upload)
+----
+
+==== AI Agent Analysis: Network Health Check
+
+This example demonstrates Claude's ability to autonomously query multiple services, correlate data, identify patterns, and provide intelligent analysis.
+
+Prompt:
+[source,text]
+----
+Analyze my network health and check if everything is running optimally
+----
+
+Claude autonomously:
+
+1. Queries device information and uptime
+2. Checks WAN connection status and stability
+3. Analyzes DSL line quality (attenuation, noise margin, error rates)
+4. Reviews connection logs for patterns and anomalies
+5. Calculates efficiency metrics from raw data
+6. Distinguishes normal behavior from actual issues
+7. Provides context-aware recommendations
+
+Example analysis output:
+[source,text]
+----
+Network Health Analysis
+
+Connection Status: HEALTHY ✓
+
+DSL Line Performance:
+- Current speed: 111,881 / 36,997 kbit/s (down/up)
+- Line capacity: 137,527 / 38,704 kbit/s (down/up)
+- Efficiency: 81% downstream, 96% upstream utilization
+- Signal quality: Excellent (attenuation 10.0/8.0 dB, noise margin 13.0/10.0 dB)
+- Error rate: Zero CRC errors - line is stable
+
+Current Session:
+- Connection uptime: 13.5 hours
+- External IP: 198.51.100.42
+- Status: Connected, no errors
+
+Pattern Analysis
+
+Daily Reconnections:
+Consistent daily disconnects around 04:00-04:20 detected. This is normal -
+ISP enforces 24-hour session limits. FRITZ!Box preemptively reconnects to
+avoid forced disconnection.
+
+Notable Event Detected:
+On December 7 at 12:52, DSL lost synchronization ("DSL antwortet nicht").
+Line retrained and recovered within 4 minutes (12:56). This could indicate:
+- Brief line disturbance or interference
+- Provider maintenance
+- Physical line issue (if recurring)
+
+Recommendation: Monitor for similar mid-day disconnections. A single
+occurrence isn't concerning, but recurring patterns would warrant provider
+investigation.
+
+Overall Assessment
+
+Network is operating optimally. DSL line synchronized near maximum capacity
+with excellent signal quality, no errors, and stable performance. The one
+DSL resync event on Dec 7 is worth monitoring but not immediately concerning.
+----
+
+This showcases how Claude can:
+
+* Autonomously query multiple TR-064 services in parallel
+* Correlate data across device info, WAN status, DSL metrics, and logs
+* Convert technical values into quality assessments
+* Identify patterns and distinguish normal from abnormal behavior
+* Provide context-aware explanations and actionable recommendations
+* Calculate derived metrics from raw data
+
+==== Deutsches Beispiel: Netzwerk-Geräte-Inventar
+
+Dieses Beispiel zeigt wie Claude autonom alle Netzwerkgeräte durchiteriert, kategorisiert und Sicherheitsanalysen durchführt.
+
+Prompt:
+[source,text]
+----
+Zeige mir alle Geräte im Netzwerk - welche sind online und gibt es unbekannte Geräte?
+----
+
+Claude durchläuft autonom:
+
+1. Abrufen der Gesamtanzahl der Hosts
+2. Iterieren durch alle 27 Geräte (parallele API-Aufrufe)
+3. Kategorisierung nach Status (aktiv/inaktiv)
+4. Gruppierung nach Verbindungsart (WLAN/Ethernet)
+5. Identifikation unbekannter Geräte
+6. Sicherheitsanalyse und Empfehlungen
+
+Beispiel-Analyse:
+[source,text]
+----
+Netzwerk-Geräte-Analyse
+
+Status-Übersicht
+Gesamt: 27 registrierte Geräte
+- Online: 6 Geräte
+- Offline: 21 Geräte
+
+Aktive Geräte (derzeit online)
+
+WLAN-Geräte (802.11):
+1. Wohnzimmer - 192.168.178.39 (Smart TV)
+2. Tablet - 192.168.178.78
+3. Smartphone - 192.168.178.33
+
+Ethernet-Geräte:
+1. Desktop-PC - 192.168.178.81
+2. FRITZ!Repeater - 192.168.178.24 (Mesh-Erweiterung)
+3. FRITZ!Box - 192.168.178.1 (Router)
+
+Offline-Geräte (zuletzt gesehen)
+
+Mobile Geräte:
+- Laptop - 192.168.178.71
+- Smartphone-2 - 192.168.178.88
+- E-Reader - 192.168.178.23
+- Smartwatch - 192.168.178.85
+- Gaming-Konsole - 192.168.178.35
+
+Unbekannte Geräte:
+- 9 Geräte mit generischen "PC-" Namen ohne IP-Adresse
+
+Analyse und Empfehlungen
+
+Auffälligkeiten:
+1. 9 Geräte mit generischen Namen ohne IP - vermutlich einmalige
+   Gast-Verbindungen mit randomisierten MAC-Adressen (Privacy-Feature)
+2. Ein Gerät ist dual-connected (Ethernet + WLAN parallel)
+3. FRITZ!Repeater bei .24 erkannt (Mesh-Netzwerk aktiv)
+
+Sicherheitshinweise:
+- Alle aktiven Geräte haben sprechende Namen (gut identifizierbar)
+- 9 unbekannte Einträge sind inaktiv (alte Gast-Verbindungen)
+- Randomisierte MAC-Adressen erkennbar (02:, 06: Präfixe)
+
+Empfehlung:
+Die inaktiven "PC-" Einträge können gelöscht werden um die Übersicht
+zu verbessern. Sie stammen vermutlich von Gast-Geräten mit MAC-
+Randomisierung.
+
+Aktuell keine Sicherheitsbedenken - alle aktiven Geräte sind bekannt.
+----
+
+Dies demonstriert:
+
+* Autonome Iteration durch große Datenmengen (27 API-Aufrufe)
+* Intelligente Kategorisierung und Gruppierung
+* Erkennung von Netzwerk-Topologie (Mesh, Dual-Connection)
+* Sicherheitsanalyse (unbekannte Geräte, MAC-Randomisierung)
+* Praktische Handlungsempfehlungen
+* Ausgabe auf Deutsch mit natürlicher Sprache
+
+==== Deutsches Beispiel: Bandbreiten-Priorisierung
+
+Dieses Beispiel zeigt wie Claude auf natürlichsprachliche Anfragen reagiert, das richtige Gerät identifiziert und eine Konfigurationsänderung durchführt.
+
+Prompt:
+[source,text]
+----
+Mein Video im Wohnzimmer ruckelt - setze die Bandbreite hoch
+----
+
+Claude führt autonom durch:
+
+1. Scannen aller aktiven Geräte im Netzwerk
+2. Identifikation des Ziel-Geräts anhand des Namens "Wohnzimmer"
+3. Abruf der aktuellen Prioritäts-Einstellung
+4. Setzen der hohen Priorität via QoS
+5. Verifizierung der Änderung
+6. Benutzerfreundliche Rückmeldung
+
+Beispiel-Ausgabe:
+[source,text]
+----
+Bandbreiten-Priorisierung
+
+Gerät identifiziert:
+- Name: Wohnzimmer
+- IP: 192.168.178.39
+- Verbindung: WLAN (780 Mbit/s)
+- Aktuelle Priorität: Normal
+
+Aktion: Priorität auf "Hoch" gesetzt ✓
+
+Das Gerät "Wohnzimmer" erhält jetzt bevorzugt Bandbreite.
+Die FRITZ!Box wird diesem Gerät Vorrang vor anderen Geräten
+im Netzwerk geben.
+
+Tipp: Wenn das Video wieder flüssig läuft, kannst du die
+Priorität später wieder zurücksetzen mit "Setze Wohnzimmer
+auf normale Priorität".
+----
+
+Dies demonstriert:
+
+* Verarbeitung natürlichsprachlicher Anfragen (nicht technische Befehle)
+* Intelligente Geräte-Identifikation anhand von Namensmustern
+* Ausführung von Konfigurationsänderungen (nicht nur Monitoring)
+* Quality of Service (QoS) Management
+* Verifizierung der durchgeführten Änderung
+* Proaktive Tipps für zukünftige Nutzung
+
+Praktische Anwendungsfälle:
+
+* Video-Streaming ruckelt → Priorität für Smart TV erhöhen
+* Video-Konferenz im Homeoffice → Laptop priorisieren
+* Online-Gaming laggt → Gaming-Konsole bevorzugen
+* Downloads drosseln → Unwichtige Geräte depriorisieren
+
+==== Deutsches Beispiel: Zeitgesteuerte Aktionen (Killer-Feature)
+
+Dieses Beispiel zeigt eine Funktion die keine GUI jemals bieten kann: Zeitgesteuerte Netzwerk-Aktionen mit natürlicher Sprache.
+
+Prompt:
+[source,text]
+----
+Sperre Kevins Nintendo Switch in 20 Minuten - er hat genug gezockt
+----
+
+Claude führt autonom durch:
+
+1. Identifikation des Geräts anhand des Namens "Nintendo Switch"
+2. Abruf der aktuellen Zugriffsstatus
+3. Erstellung eines zeitgesteuerten Jobs via `at`
+4. Verwendung des CLI-Modus für persistente Ausführung
+5. Rückmeldung mit Job-Details
+
+Beispiel-Ausgabe:
+[source,text]
+----
+Internet-Sperre geplant
+
+Gerät identifiziert:
+- Name: Nintendo Switch
+- IP: 192.168.178.35
+- Aktueller Status: Internet erlaubt
+
+Aktion: Zeitverzögerte Sperre in 20 Minuten (19:40 Uhr)
+Job-ID: 42
+
+Die Nintendo Switch wird automatisch um 19:40 Uhr gesperrt.
+Job läuft persistent im Hintergrund (überlebt Session-Ende).
+
+Technische Details:
+at-Job verwendet CLI-Modus des MCP Servers:
+  fritz-mcp --execute \
+    --service "urn:dslforum-org:service:X_AVM-DE_HostFilter:1" \
+    --action "DisallowWANAccessByIP" \
+    --args '{"NewIPv4Address":"192.168.178.35","NewDisallow":"1"}'
+
+Zum Abbrechen: at -r 42
+----
+
+CLI-Modus Features:
+
+* Eigenständige Ausführung ohne MCP-Session
+* Nutzt gleiche Credential-Verwaltung (.env)
+* Vollständig model-agnostisch (nutzt Runtime-Discovery)
+* Perfekt für at/cron Integration
+* Komplett persistent (überlebt Neustart)
+
+Dies demonstriert:
+
+* Natürlichsprachliche Zeitangaben ("in 20 Minuten")
+* Persistente Job-Scheduling mit Linux at
+* CLI-Modus für nicht-interaktive Ausführung
+* Elternkontrolle mit zeitverzögerter Durchsetzung
+* Feature das keine Web-GUI jemals bieten kann
+
+Praktische Anwendungsfälle:
+
+* Elternkontrolle: "Sperre Smartphone in 30 Minuten"
+* Arbeitszeit: "Sperre Gaming-Konsole von 9-17 Uhr" (cron)
+* Gäste-Netz: "Aktiviere Gast-WLAN um 18:00" (at)
+* Bandbreite: "Priorisiere Meeting-Laptop in 5 Minuten"
+* Wartung: "Starte Router-Neustart um 3:00 nachts" (cron)
+
+== Troubleshooting
+
+=== Connection Issues
+
+1. Verify your FRITZ!Box is accessible: `ping fritz.box`
+2. Check credentials in `.env` file
+3. Ensure TR-064 port (49000) is accessible
+4. Check FRITZ!Box user has appropriate permissions
+
+=== Claude Desktop Not Finding Server
+
+1. Verify absolute path in `claude_desktop_config.json`
+2. Check binary has execute permissions
+3. Restart Claude Desktop after config changes
+4. Check Claude Desktop logs for errors
+
+=== Permission Errors
+
+If you encounter permission errors, verify:
+
+1. Your FRITZ!Box user has **FRITZ!Box-Einstellungen** permission enabled (see Configuration section above)
+2. Credentials in `.env` file are correct
+3. FRITZ!Box user account is not locked or disabled
+
+== Privacy & Security
+
+* **All communication stays local**: Server → FRITZ!Box communication happens entirely on your local network
+* **No cloud services**: No data is sent to external servers
+* **Credentials stored locally**: Only you have access to your credentials
+* **Open source**: Code available for inspection in the source repository
+
+== Support
+
+* **Issues**: Report issues at https://github.com/kambriso/fritzbox-mcp-server/issues
+* **Source Code**: https://github.com/kambriso/fritzbox-mcp-server-src (private)
+
+== License
+
+Business Source License 1.1 - See LICENSE file for details
+
+Change License: Apache License 2.0 (effective 2028-11-25)
+
+== Disclaimer
+
+[CAUTION]
+====
+This software is provided as-is. Always ensure your FRITZ!Box is secured with a strong password and is not exposed to the internet.
+====
