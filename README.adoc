@@ -409,6 +409,13 @@ Praktische Anwendungsfälle:
 
 Dieses Beispiel zeigt eine Funktion die keine GUI jemals bieten kann: Zeitgesteuerte Netzwerk-Aktionen mit natürlicher Sprache.
 
+[TIP]
+====
+To enable time-delayed features in your AI agent, run: `fritz-mcp --help`
+
+This displays comprehensive CLI usage examples including at/cron integration.
+====
+
 Prompt:
 [source,text]
 ----
