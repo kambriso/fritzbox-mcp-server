@@ -518,9 +518,11 @@ If you encounter permission errors, verify:
 
 == License
 
-Business Source License 1.1 - See LICENSE file for details
+Copyright (c) 2025 Kambrium Software GmbH. All Rights Reserved.
 
-Change License: Apache License 2.0 (effective 2028-11-25)
+Free for personal use (single FRITZ!Box). Commercial use requires licensing.
+
+See LICENSE file for complete terms.
 
 == Disclaimer
 
