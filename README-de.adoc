@@ -1,0 +1,379 @@
+= FRITZ!Box MCP Server
+
+Steuere deine FRITZ!Box über KI-Assistenten wie Claude mit natürlicher Sprache.
+
+link:README.adoc[🇬🇧 English Version]
+
+https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
+
+== Was ist das?
+
+Dieser MCP-Server ermöglicht die Steuerung deiner FRITZ!Box über KI-Assistenten. Stelle Fragen in natürlicher Sprache, analysiere dein Netzwerk, verwalte Geräte, behebe Probleme und konfiguriere Einstellungen - ohne die Web-Oberfläche zu berühren.
+
+Deine FRITZ!Box-Zugangsdaten verlassen niemals deinen Computer. Alles läuft lokal auf deinem Rechner.
+
+== Warum diesen Server nutzen?
+
+Funktioniert mit ALLEN FRITZ!Box-Modellen und Firmware-Versionen. Wenn AVM neue Features oder Modelle veröffentlicht, passt sich dieser Server automatisch an. Keine Updates nötig.
+
+Anders als andere Lösungen, die bei Firmware-Updates kaputt gehen oder nur mit bestimmten Modellen funktionieren, erkennt dieser Server die Fähigkeiten deines Routers in Echtzeit.
+
+== Schnellstart
+
+=== 1. Download
+
+Lade die Binärdatei für dein System von https://github.com/kambriso/fritzbox-mcp-server/releases[Releases]:
+
+Linux:: `fritzbox-mcp-server-linux-amd64` oder `fritzbox-mcp-server-linux-arm64`
+macOS:: `fritzbox-mcp-server-darwin-amd64` oder `fritzbox-mcp-server-darwin-arm64`
+Windows:: `fritzbox-mcp-server-windows-amd64.exe` oder `fritzbox-mcp-server-windows-arm64.exe`
+
+Linux/macOS: Mache die Datei ausführbar:
+[source,bash]
+----
+chmod +x fritzbox-mcp-server-*
+----
+
+=== 2. Konfigurationsdatei erstellen
+
+Erstelle eine Datei namens `.env` mit deinen FRITZ!Box-Zugangsdaten:
+
+[source,bash]
+----
+FRITZ_HOST=fritz.box
+FRITZ_USERNAME=dein-benutzername
+FRITZ_PASSWORD=dein-passwort
+----
+
+Speichere diese Datei an einem dieser Orte:
+
+Windows:: `%USERPROFILE%\.config\fritzbox-mcp-server\.env`
+macOS:: `~/.config/fritzbox-mcp-server/.env`
+Linux:: `~/.config/fritzbox-mcp-server/.env`
+
+Oder lege sie zum Testen im gleichen Ordner wie die Binärdatei ab.
+
+[WARNING]
+====
+Diese Datei enthält dein Passwort. Halte sie sicher und committe sie niemals in die Versionsverwaltung.
+
+Unter Linux/macOS: Zugriff beschränken mit `chmod 600 ~/.config/fritzbox-mcp-server/.env`
+====
+
+=== 3. FRITZ!Box Benutzerberechtigungen
+
+Dein FRITZ!Box-Benutzer benötigt vollen Zugriff auf die Einstellungen.
+
+In der FRITZ!Box Web-Oberfläche (http://fritz.box):
+
+1. Gehe zu System → FRITZ!Box-Benutzer → [Dein Benutzer] → Berechtigungen
+2. Aktiviere: "FRITZ!Box-Einstellungen" (oder "Der Benutzer kann alle Einstellungen der FRITZ!Box sehen und bearbeiten")
+
+=== 4. Claude Desktop konfigurieren
+
+Bearbeite deine Claude Desktop Konfigurationsdatei:
+
+Windows:: `%APPDATA%\Claude\claude_desktop_config.json`
+macOS:: `~/Library/Application Support/Claude/claude_desktop_config.json`
+Linux:: `~/.config/claude/claude_desktop_config.json`
+
+Füge den Server hinzu:
+
+[source,json]
+----
+{
+  "mcpServers": {
+    "fritzbox": {
+      "command": "C:\\pfad\\zur\\fritzbox-mcp-server.exe"
+    }
+  }
+}
+----
+
+[TIP]
+====
+Windows: Verwende den vollständigen Pfad wie `C:\\Users\\DeinName\\Downloads\\fritzbox-mcp-server-windows-amd64.exe`
+
+Beachte die doppelten Backslashes in Windows-Pfaden.
+
+macOS/Linux: Verwende absolute Pfade wie `/Users/deinname/bin/fritzbox-mcp-server`
+====
+
+Starte Claude Desktop neu.
+
+== Was kannst du damit machen?
+
+=== Fragen stellen
+
+"Was ist meine externe IP-Adresse?"
+
+"Zeige mir alle verbundenen Geräte"
+
+"Wie lange läuft der Router schon?"
+
+"Was ist meine aktuelle Internetgeschwindigkeit?"
+
+"Ist mein WLAN sicher?"
+
+=== Netzwerk analysieren
+
+"Analysiere meine Netzwerk-Gesundheit und sag mir ob alles gut aussieht"
+
+Claude prüft deine Verbindungsqualität, identifiziert Probleme, erklärt Muster in deinen Logs und gibt Empfehlungen.
+
+Beispiel-Antwort:
+[source,text]
+----
+Netzwerk-Gesundheits-Analyse
+
+Verbindung: Gesund ✓
+- Geschwindigkeit: 112 / 37 Mbit/s (down/up)
+- Signalqualität: Ausgezeichnet
+- Keine Fehler erkannt
+
+Tägliche Reconnects um 04:00:
+Das ist normal. Dein ISP erzwingt 24-Stunden-Sitzungslimits.
+Die FRITZ!Box reconnected proaktiv um Zwangstrennung zu vermeiden.
+
+Eine DSL-Resynchronisation am 7. Dez um 12:52:
+Einzelfall, in 4 Minuten wiederhergestellt. Beobachte wiederkehrende
+Muster, aber als isolierter Vorfall nicht besorgniserregend.
+
+Gesamt: Netzwerk arbeitet optimal.
+----
+
+=== Geräte verwalten
+
+"Zeige alle WLAN-Geräte"
+
+"Welche Geräte verbrauchen am meisten Bandbreite?"
+
+"Liste unbekannte Geräte in meinem Netzwerk"
+
+"Priorisiere die Bandbreite meines Laptops - ich habe einen Videoanruf"
+
+=== Kindersicherung & Zeitsteuerung
+
+"Sperre die Nintendo Switch in 20 Minuten"
+
+"Deaktiviere Internet für alle Gaming-Geräte während der Arbeitszeit"
+
+"Aktiviere Gast-WLAN um 18 Uhr für die Party"
+
+=== Fehlerbehebung
+
+"Warum ist mein Internet langsam?"
+
+"Prüfe ob es Verbindungsprobleme gibt"
+
+"Zeige mir die letzten Verbindungsabbrüche"
+
+== Beispiele
+
+=== Netzwerk-Gesundheits-Check
+
+Prompt: "Analysiere meine Netzwerk-Gesundheit und prüfe ob alles optimal läuft"
+
+Claude arbeitet autonom:
+
+1. Fragt Geräteinfo und Uptime ab
+2. Prüft Verbindungsstatus und Stabilität
+3. Analysiert Leitungsqualität und Fehlerraten
+4. Durchsucht Logs nach Mustern
+5. Unterscheidet normales Verhalten von Problemen
+6. Gibt Empfehlungen
+
+=== Netzwerk-Geräte-Inventar
+
+Prompt: "Zeige mir alle Geräte im Netzwerk - welche sind online und gibt es unbekannte Geräte?"
+
+Claude durchläuft autonom:
+
+1. Abrufen der Gesamtanzahl der Hosts
+2. Iterieren durch alle Geräte (parallele API-Aufrufe)
+3. Kategorisierung nach Status (aktiv/inaktiv)
+4. Gruppierung nach Verbindungsart (WLAN/Ethernet)
+5. Identifikation unbekannter Geräte
+6. Sicherheitsanalyse und Empfehlungen
+
+Beispiel-Analyse:
+[source,text]
+----
+Netzwerk-Geräte-Analyse
+
+Status-Übersicht
+Gesamt: 27 registrierte Geräte
+- Online: 6 Geräte
+- Offline: 21 Geräte
+
+Aktive Geräte (derzeit online)
+
+WLAN-Geräte (802.11):
+1. Wohnzimmer - 192.168.178.39 (Smart TV)
+2. Tablet - 192.168.178.78
+3. Smartphone - 192.168.178.33
+
+Ethernet-Geräte:
+1. Desktop-PC - 192.168.178.81
+2. FRITZ!Repeater - 192.168.178.24 (Mesh-Erweiterung)
+3. FRITZ!Box - 192.168.178.1 (Router)
+
+Offline-Geräte (zuletzt gesehen)
+
+Mobile Geräte:
+- Laptop - 192.168.178.71
+- Smartphone-2 - 192.168.178.88
+- E-Reader - 192.168.178.23
+- Smartwatch - 192.168.178.85
+- Gaming-Konsole - 192.168.178.35
+
+Unbekannte Geräte:
+- 9 Geräte mit generischen "PC-" Namen ohne IP-Adresse
+
+Analyse und Empfehlungen
+
+Auffälligkeiten:
+1. 9 Geräte mit generischen Namen ohne IP - vermutlich einmalige
+   Gast-Verbindungen mit randomisierten MAC-Adressen (Privacy-Feature)
+2. Ein Gerät ist dual-connected (Ethernet + WLAN parallel)
+3. FRITZ!Repeater bei .24 erkannt (Mesh-Netzwerk aktiv)
+
+Sicherheitshinweise:
+- Alle aktiven Geräte haben sprechende Namen (gut identifizierbar)
+- 9 unbekannte Einträge sind inaktiv (alte Gast-Verbindungen)
+- Randomisierte MAC-Adressen erkennbar (02:, 06: Präfixe)
+
+Empfehlung:
+Die inaktiven "PC-" Einträge können gelöscht werden um die Übersicht
+zu verbessern. Sie stammen vermutlich von Gast-Geräten mit MAC-
+Randomisierung.
+
+Aktuell keine Sicherheitsbedenken - alle aktiven Geräte sind bekannt.
+----
+
+=== Bandbreiten-Priorisierung
+
+Prompt: "Mein Video im Wohnzimmer ruckelt - setze die Bandbreite hoch"
+
+Claude führt autonom durch:
+
+1. Scannen aller aktiven Geräte im Netzwerk
+2. Identifikation des Ziel-Geräts anhand des Namens "Wohnzimmer"
+3. Abruf der aktuellen Prioritäts-Einstellung
+4. Setzen der hohen Priorität via QoS
+5. Verifizierung der Änderung
+6. Benutzerfreundliche Rückmeldung
+
+Beispiel-Ausgabe:
+[source,text]
+----
+Bandbreiten-Priorisierung
+
+Gerät identifiziert:
+- Name: Wohnzimmer
+- IP: 192.168.178.39
+- Verbindung: WLAN (780 Mbit/s)
+- Aktuelle Priorität: Normal
+
+Aktion: Priorität auf "Hoch" gesetzt ✓
+
+Das Gerät "Wohnzimmer" erhält jetzt bevorzugt Bandbreite.
+Die FRITZ!Box wird diesem Gerät Vorrang vor anderen Geräten
+im Netzwerk geben.
+
+Tipp: Wenn das Video wieder flüssig läuft, kannst du die
+Priorität später wieder zurücksetzen mit "Setze Wohnzimmer
+auf normale Priorität".
+----
+
+Praktische Anwendungsfälle:
+
+* Video-Streaming ruckelt → Priorität für Smart TV erhöhen
+* Video-Konferenz im Homeoffice → Laptop priorisieren
+* Online-Gaming laggt → Gaming-Konsole bevorzugen
+* Downloads drosseln → Unwichtige Geräte depriorisieren
+
+=== Zeitgesteuerte Aktionen
+
+Prompt: "Sperre Kevins Nintendo Switch in 20 Minuten - er hat genug gezockt"
+
+Claude plant die Aktion und führt sie automatisch aus, auch nachdem du den Chat geschlossen hast.
+
+Dies nutzt den CLI-Modus des Servers für persistente Hintergrund-Ausführung.
+
+Beispiel-Ausgabe:
+[source,text]
+----
+Internet-Sperre geplant
+
+Gerät identifiziert:
+- Name: Nintendo Switch
+- IP: 192.168.178.35
+- Aktueller Status: Internet erlaubt
+
+Aktion: Zeitverzögerte Sperre in 20 Minuten (19:40 Uhr)
+Job-ID: 42
+
+Die Nintendo Switch wird automatisch um 19:40 Uhr gesperrt.
+Job läuft persistent im Hintergrund (überlebt Session-Ende).
+
+Zum Abbrechen: at -r 42
+----
+
+Praktische Anwendungsfälle:
+
+* Elternkontrolle: "Sperre Smartphone in 30 Minuten"
+* Arbeitszeit: "Sperre Gaming-Konsole von 9-17 Uhr" (cron)
+* Gäste-Netz: "Aktiviere Gast-WLAN um 18:00" (at)
+* Bandbreite: "Priorisiere Meeting-Laptop in 5 Minuten"
+* Wartung: "Starte Router-Neustart um 3:00 nachts" (cron)
+
+== Fehlerbehebung
+
+=== Kann nicht zur FRITZ!Box verbinden
+
+Prüfe ob dein Router erreichbar ist:
+[source,bash]
+----
+ping fritz.box
+----
+
+Überprüfe die Zugangsdaten in der `.env` Datei.
+
+Stelle sicher, dass dein FRITZ!Box-Benutzer die volle Einstellungs-Berechtigung hat.
+
+=== Claude Desktop findet den Server nicht
+
+Überprüfe ob der Pfad in `claude_desktop_config.json` absolut und korrekt ist.
+
+Windows: Verwende doppelte Backslashes in Pfaden.
+
+Starte Claude Desktop nach Konfigurationsänderungen neu.
+
+=== Berechtigungsfehler
+
+Dein FRITZ!Box-Benutzer benötigt die "FRITZ!Box-Einstellungen" Berechtigung. Siehe Konfigurationsabschnitt oben.
+
+== Datenschutz & Sicherheit
+
+Alle Kommunikation bleibt in deinem lokalen Netzwerk. Deine Zugangsdaten werden lokal in einer `.env` Datei gespeichert und nur für die Kommunikation mit deiner FRITZ!Box verwendet. Die KI erhält nur die Ergebnisse der Operationen, niemals deine Zugangsdaten.
+
+Keine Cloud-Dienste. Keine externen Server. Alles läuft lokal.
+
+== Support
+
+Issues:: https://github.com/kambriso/fritzbox-mcp-server/issues
+Source Code:: https://github.com/kambriso/fritzbox-mcp-server-src (privat)
+
+== Lizenz
+
+Copyright (c) 2025 Kambrium Software GmbH. Alle Rechte vorbehalten.
+
+Kostenlos für private Nutzung (einzelne FRITZ!Box). Kommerzielle Nutzung erfordert Lizenzierung.
+
+Siehe LICENSE Datei für vollständige Bedingungen.
+
+[CAUTION]
+====
+Diese Software wird wie besehen bereitgestellt. Sichere deine FRITZ!Box mit einem starken Passwort und stelle sicher, dass sie nicht dem Internet ausgesetzt ist.
+====
