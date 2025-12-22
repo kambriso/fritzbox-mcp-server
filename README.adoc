@@ -10,7 +10,23 @@ https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.sh
 
 This MCP server lets you interact with your FRITZ!Box router using AI assistants. Ask questions in plain language, analyze your network, manage devices, troubleshoot issues, and configure settings without touching the web interface.
 
-Your FRITZ!Box credentials never leave your machine. Everything runs locally on your computer.
+== How it works (Security Architecture)
+
+image::architecture.svg[Architecture Diagram]
+
+The MCP server runs on your computer and acts as a secure bridge between AI agents (which run in the cloud) and your FRITZ!Box (which stays completely local).
+
+Your FRITZ!Box credentials are stored locally in a `.env` file on your computer. The MCP server uses these credentials to communicate with your FRITZ!Box over your local network only.
+
+The AI agent receives only the results (like "3 devices connected" or "Router uptime: 5 days"), never your credentials or direct access to your router.
+
+Critical security features:
+
+* Your FRITZ!Box never needs internet exposure
+* No ports need to be opened
+* No cloud connection to your router
+* Credentials stay on your computer
+* All router communication happens on your local network only
 
 == Why use this?
 
