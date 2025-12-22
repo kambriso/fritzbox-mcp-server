@@ -2,6 +2,8 @@
 
 A secure Model Context Protocol (MCP) server for interacting with AVM FRITZ!Box routers through AI assistants like Claude.
 
+https://mcpservers.org/server/fritzbox[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
+
 == Security First
 
 [IMPORTANT]
