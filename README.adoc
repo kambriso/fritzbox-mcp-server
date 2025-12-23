@@ -36,19 +36,55 @@ Unlike other solutions that break with firmware updates or only work with specif
 
 == Quick Start
 
-=== 1. Download
+=== 1. Installation
+
+==== Automated Installation (Linux/macOS - Recommended)
+
+Download and install with automatic checksum verification:
+
+[source,bash]
+----
+curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+----
+
+The installer will:
+
+* Detect your platform (OS and architecture) automatically
+* Download the latest release from GitHub
+* Verify SHA256 checksums for security
+* Install to `~/.local/bin/fritz-mcp`
+* Make the binary executable
+
+[TIP]
+====
+Customize installation:
+
+[source,bash]
+----
+# Install specific version
+FRITZBOX_MCP_VERSION=v0.4.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+
+# Install to custom directory
+FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+----
+====
+
+==== Manual Installation (All platforms)
 
 Get the binary for your system from https://github.com/kambriso/fritzbox-mcp-server/releases[Releases]:
 
-Linux:: `fritzbox-mcp-server-linux-amd64` or `fritzbox-mcp-server-linux-arm64`
-macOS:: `fritzbox-mcp-server-darwin-amd64` or `fritzbox-mcp-server-darwin-arm64`
-Windows:: `fritzbox-mcp-server-windows-amd64.exe` or `fritzbox-mcp-server-windows-arm64.exe`
+Linux:: `fritz-mcp-linux-amd64.tar.xz` or `fritz-mcp-linux-arm64.tar.xz`
+macOS:: `fritz-mcp-darwin-amd64.tar.xz` or `fritz-mcp-darwin-arm64.tar.xz`
+Windows:: `fritz-mcp-windows-amd64.zip` or `fritz-mcp-windows-arm64.zip`
 
-Linux/macOS users: Make it executable:
+Extract the archive and make it executable (Linux/macOS):
 [source,bash]
 ----
-chmod +x fritzbox-mcp-server-*
+tar -xJf fritz-mcp-linux-amd64.tar.xz
+chmod +x fritz-mcp
 ----
+
+Windows: Extract the ZIP file.
 
 === 2. Create Configuration File
 
@@ -100,7 +136,7 @@ Add the server:
 {
   "mcpServers": {
     "fritzbox": {
-      "command": "C:\\path\\to\\fritzbox-mcp-server.exe"
+      "command": "/path/to/fritz-mcp"
     }
   }
 }
@@ -108,11 +144,11 @@ Add the server:
 
 [TIP]
 ====
-Windows users: Use full path like `C:\\Users\\YourName\\Downloads\\fritzbox-mcp-server-windows-amd64.exe`
+Windows: `C:\\Users\\YourName\\path\\to\\fritz-mcp.exe` (note the double backslashes)
 
-Note the double backslashes in Windows paths.
+macOS/Linux with automated install: `~/.local/bin/fritz-mcp`
 
-macOS/Linux users: Use absolute path like `/Users/yourname/bin/fritzbox-mcp-server`
+macOS/Linux with manual install: Absolute path to where you placed the binary, e.g., `/Users/yourname/bin/fritz-mcp`
 ====
 
 Restart Claude Desktop.
