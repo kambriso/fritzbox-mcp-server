@@ -363,7 +363,7 @@ Keine Cloud-Dienste. Keine externen Server. Alles läuft lokal.
 == Support
 
 Issues:: https://github.com/kambriso/fritzbox-mcp-server/issues
-Source Code:: https://github.com/kambriso/fritzbox-mcp-server-src (privat)
+Source Code:: https://github.com/kambriso/fritz-mcp (privat)
 
 == Lizenz
 
