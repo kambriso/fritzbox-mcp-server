@@ -379,7 +379,7 @@ main() {
     fi
 
     # Check for existing installation
-    target_binary="${INSTALL_DIR}/fritzbox-mcp-server"
+    target_binary="${INSTALL_DIR}/fritz-mcp"
     if [ -f "$target_binary" ]; then
         log_warning "Existing installation found at: $target_binary"
         if ! prompt_confirm "Overwrite existing installation?"; then
@@ -410,7 +410,7 @@ main() {
     # Success!
     echo ""
     log_success "=============================="
-    log_success "✓ fritzbox-mcp-server installed successfully!"
+    log_success "✓ fritz-mcp installed successfully!"
     log_success "=============================="
     echo ""
     log_info "Installation location: $target_binary"
