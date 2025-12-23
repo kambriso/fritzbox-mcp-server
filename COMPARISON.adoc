@@ -1,0 +1,483 @@
+= Install Script Security Analysis & Comparison
+:toc:
+:toclevels: 3
+
+== Overview
+
+Analysis of 6 major open-source install scripts to inform security requirements for fritzbox-mcp-server installer.
+
+Analyzed scripts:
+
+* Zed Editor (https://zed.dev/install.sh)
+* nvm - Node Version Manager (https://github.com/nvm-sh/nvm)
+* rustup - Rust toolchain (https://github.com/rust-lang/rustup)
+* Homebrew (https://github.com/Homebrew/install)
+* Docker Engine (https://get.docker.com)
+* Deno Runtime (https://deno.land/install.sh)
+
+== Comparison Table
+
+[cols="2,1,1,1,1,1,1", options="header"]
+|===
+| Feature | Zed | nvm | rustup | Homebrew | Docker | Deno
+
+6+^h| *Security Features*
+| Checksum verification | ❌ | ❌ | ❌ | ❌ | ❌ | ❌
+| GPG signature | ❌ | ❌ | ❌ | ❌ | ✅^a^ | ❌
+| HTTPS enforcement | ✅ | ✅ | ✅^b^ | ✅ | ✅ | ✅
+| Validates tools (curl/wget) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅
+| Prevents root execution | ❌ | ❌ | ❌ | ✅ | ⚠️^c^ | ❌
+| Secure temp files | ✅ | ✅ | ✅ | ✅ | ❌ | ❌
+| Avoids `eval` | ✅ | ❌^d^ | ✅ | ⚠️^e^ | ✅ | ✅
+
+6+^h| *Error Handling*
+| `set -e` (exit on error) | ✅ | ❌ | ❌ | ❌ | ✅ | ✅
+| `set -u` (unset vars fail) | ✅ | ❌ | ✅ | ✅ | ❌ | ❌
+| Retry logic | ❌ | ❌ | ❌ | ✅^f^ | ❌ | ❌
+| Cleanup on failure | ❌ | ❌ | ❌ | ❌ | ❌ | ✅
+| Custom error messages | ✅ | ✅ | ✅ | ✅ | ✅ | ✅
+
+6+^h| *POSIX Compliance*
+| Shebang | `#!/bin/sh` | `#!/bin/bash` | `#!/bin/sh` | `#!/bin/bash` | `#!/bin/sh` | `#!/bin/sh`
+| Uses bash features | ❌ | ✅^g^ | ⚠️^h^ | ✅^i^ | ⚠️ | ❌
+| POSIX compliant | ✅ | ❌ | ⚠️ | ❌ | ⚠️ | ✅
+
+6+^h| *Best Practices*
+| Platform detection | ✅ | ✅ | ✅ | ✅ | ✅ | ✅
+| Architecture detection | ✅ | ❌ | ✅ | ✅ | ✅ | ✅
+| Pre-flight checks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅
+| Interactive prompts | ❌ | ✅ | ✅ | ✅ | ⚠️^j^ | ❌
+| Respects env vars | ✅ | ✅ | ✅ | ✅ | ✅ | ✅
+| Uninstall support | ✅ | ❌ | ✅ | ❌ | ❌ | ❌
+
+6+^h| *Size & Complexity*
+| Lines of code | ~155 | ~800+ | ~500+ | ~800+ | ~600+ | ~100
+| Functions | 2 | 20+ | 15+ | 30+ | 20+ | 1
+| Comments/docs | Minimal | Extensive | Good | Extensive | Good | Minimal
+|===
+
+[horizontal]
+^a^:: GPG verification only for apt repositories, not the script itself
+^b^:: Enforces TLS 1.2+, validates cipher suites
+^c^:: Requires root/sudo (opposite of prevention)
+^d^:: Uses `eval` with unsanitized wget arguments
+^e^:: Uses `eval` indirectly via subshell substitution
+^f^:: 5 retry attempts with exponential backoff
+^g^:: Arrays, parameter expansion patterns
+^h^:: Uses `local` (non-POSIX), fallback to `typeset` for ksh
+^i^:: Arrays, process substitution, extended globbing
+^j^:: 20-second delay warning, not true interactive confirmation
+
+== Critical Security Findings
+
+=== Nobody Does Checksum Verification
+
+**The single biggest security gap across all analyzed scripts:**
+
+* No script verifies checksums of downloaded binaries
+* All rely solely on HTTPS for integrity
+* HTTPS protects against MITM but not:
+** Compromised CDN/server
+** Malicious repository maintainer
+** Supply chain attacks
+
+=== Best Security Implementations
+
+[cols="1,3"]
+|===
+| Project | Notable Security Features
+
+| *rustup*
+a| * TLS 1.2+ enforcement with cipher suite validation
+* Detects and rejects broken snap curl (permissions vulnerability)
+* Validates executable permissions before running
+
+| *Homebrew*
+a| * Prevents running as root
+* Validates sudo access on macOS
+* Supports `/etc/homebrew/brew.no_install` killswitch
+* Checks Git/cURL minimum versions
+
+| *Docker*
+a| * GPG key verification for apt repositories
+* Validates mirror options against whitelist
+* Validates channel against whitelist (stable, test)
+* 20-second delay warning before installation
+|===
+
+=== Worst Security Practices
+
+[cols="1,3"]
+|===
+| Project | Security Issues
+
+| *nvm*
+a| * Uses `eval` with potentially unsanitized wget arguments
+* No signature/checksum verification
+* Git operations use `--depth=1` (could miss security patches)
+
+| *Docker*
+a| * Uses `-qq` flags suppressing output (hinders audit trails)
+* `|| true` statements mask failures
+* Silences errors with `2>/dev/null`
+
+| *Deno*
+a| * No validation that downloaded file is valid zip
+* Silent failure if version detection fails
+* No backup or rollback mechanism
+|===
+
+== Windows: PowerShell Equivalent
+
+=== The Pattern
+
+Bash equivalent of `curl | bash`:
+[source,powershell]
+----
+iwr -useb https://example.com/install.ps1 | iex
+----
+
+Expanded form:
+[source,powershell]
+----
+Invoke-WebRequest -Uri https://example.com/install.ps1 -UseBasicParsing | Invoke-Expression
+----
+
+Where:
+
+* `iwr` = alias for `Invoke-WebRequest` (like `curl`/`wget`)
+* `-useb` = shorthand for `-UseBasicParsing`
+* `iex` = alias for `Invoke-Expression` (like `bash`)
+
+=== Security Concerns (Worse than curl|bash)
+
+[WARNING]
+====
+PowerShell `iex` pattern is MORE dangerous than `curl | bash`:
+
+* `Invoke-Expression` executes arbitrary code without sandboxing
+* Often requires `Set-ExecutionPolicy Bypass` (disables security)
+* Commonly blocked by corporate Group Policy
+* No equivalent to `set -e` for automatic error handling
+* Windows Defender may flag legitimate scripts
+====
+
+=== Recommended Windows Approach
+
+[source,powershell]
+----
+# Download first
+Invoke-WebRequest -Uri https://example.com/install.ps1 -OutFile install.ps1
+
+# User inspects install.ps1
+Get-Content install.ps1
+
+# Execute manually after inspection
+.\install.ps1
+----
+
+== Requirements for fritzbox-mcp-server
+
+=== Unix/POSIX Install Script Requirements
+
+==== Must Have (Security Critical)
+
+[cols="1,3,1"]
+|===
+| Requirement | Rationale | Priority
+
+| `set -eu`
+| Exit on error, fail on undefined variables
+| 🔴 Critical
+
+| HTTPS-only downloads
+| Prevent MITM attacks
+| 🔴 Critical
+
+| Secure temp files (`mktemp -d`)
+| Prevent /tmp race conditions
+| 🔴 Critical
+
+| SHA256 checksum verification
+| Detect compromised/corrupted downloads
+| 🔴 Critical
+
+| Platform detection (Linux/macOS)
+| Download correct binary
+| 🔴 Critical
+
+| Architecture detection (x86_64/aarch64)
+| Download correct binary
+| 🔴 Critical
+
+| Validate curl/wget exist
+| Fail early if tools missing
+| 🔴 Critical
+
+| Cleanup downloaded files
+| Don't leave artifacts in /tmp
+| 🟡 High
+
+| `#!/bin/sh` shebang (not bash)
+| Maximum portability
+| 🟡 High
+
+| POSIX-compliant (no bashisms)
+| Works on dash, ash, ksh, etc.
+| 🟡 High
+|===
+
+==== Should Have (Best Practices)
+
+[cols="1,3,1"]
+|===
+| Requirement | Rationale | Priority
+
+| Retry logic (3 attempts)
+| Handle transient network failures
+| 🟡 High
+
+| Interactive confirmation
+| User explicitly opts in
+| 🟢 Medium
+
+| Detect existing installation
+| Prevent clobbering, offer upgrade
+| 🟢 Medium
+
+| Respect `FRITZBOX_MCP_INSTALL_DIR`
+| Allow custom install location
+| 🟢 Medium
+
+| Version pinning support
+| Allow installing specific version
+| 🟢 Medium
+
+| Uninstall instructions/script
+| Clean removal capability
+| 🟢 Medium
+
+| Colored output (if tty)
+| Better UX for interactive use
+| 🔵 Low
+|===
+
+==== Must NOT Do (Security Anti-Patterns)
+
+[cols="1,3"]
+|===
+| Anti-Pattern | Why
+
+| Use `eval`
+| Code injection risk
+
+| Modify PATH in shell profiles
+| MCP servers don't need PATH
+
+| Require root/sudo
+| User-level install only
+
+| Silence errors (`2>/dev/null`, `|| true`)
+| Masks failures
+
+| Download over HTTP
+| MITM vulnerability
+
+| Execute downloaded code without verification
+| No checksum = no trust
+|===
+
+=== Windows PowerShell Script Requirements
+
+==== Must Have (Security Critical)
+
+[cols="1,3,1"]
+|===
+| Requirement | Rationale | Priority
+
+| HTTPS-only downloads
+| Prevent MITM attacks
+| 🔴 Critical
+
+| SHA256 checksum verification
+| Detect compromised downloads
+| 🔴 Critical
+
+| Architecture detection
+| Download correct binary (x64/arm64)
+| 🔴 Critical
+
+| `-UseBasicParsing`
+| Avoid IE dependency
+| 🔴 Critical
+
+| Error handling (`$ErrorActionPreference = 'Stop'`)
+| Fail fast on errors
+| 🔴 Critical
+
+| Validate download before execution
+| Ensure zip is valid
+| 🔴 Critical
+
+| Cleanup temporary files
+| Don't leave artifacts
+| 🟡 High
+|===
+
+==== Should Have (Best Practices)
+
+[cols="1,3,1"]
+|===
+| Requirement | Rationale | Priority
+
+| Check PowerShell version (>= 5.1)
+| Ensure cmdlets available
+| 🟡 High
+
+| Interactive confirmation
+| User explicitly opts in
+| 🟡 High
+
+| Detect existing installation
+| Prevent clobbering
+| 🟢 Medium
+
+| Respect `$env:FRITZBOX_MCP_INSTALL_DIR`
+| Allow custom location
+| 🟢 Medium
+
+| Color output (`Write-Host -ForegroundColor`)
+| Better UX
+| 🔵 Low
+|===
+
+==== Must NOT Do
+
+[cols="1,3"]
+|===
+| Anti-Pattern | Why
+
+| Use `Invoke-Expression` on untrusted input
+| Code injection risk
+
+| Require `Set-ExecutionPolicy Bypass`
+| Disables security features
+
+| Modify system PATH
+| Not needed for MCP servers
+
+| Suppress errors (`-ErrorAction SilentlyContinue`)
+| Masks failures
+
+| Download via `iex` pipe
+| No inspection opportunity
+|===
+
+=== Installation Location Requirements
+
+==== Unix/POSIX
+
+[source,bash]
+----
+# Default location
+$HOME/.local/bin/fritzbox-mcp-server
+
+# Alternative (if $FRITZBOX_MCP_INSTALL_DIR set)
+$FRITZBOX_MCP_INSTALL_DIR/fritzbox-mcp-server
+
+# NOT in PATH - MCP servers configured per AI agent
+----
+
+==== Windows
+
+[source,powershell]
+----
+# Default location
+$env:USERPROFILE\.local\bin\fritzbox-mcp-server.exe
+
+# Alternative (if environment variable set)
+$env:FRITZBOX_MCP_INSTALL_DIR\fritzbox-mcp-server.exe
+
+# NOT in PATH - MCP servers configured per AI agent
+----
+
+=== Checksum Distribution
+
+**Critical requirement:** Checksums must be:
+
+1. **Separate from binaries** - different server/repo
+2. **Signed** - GPG signature on checksum file
+3. **Versioned** - committed to git with history
+
+**Example:**
+
+[source]
+----
+# On GitHub releases page
+fritzbox-mcp-server-linux-amd64          (binary)
+fritzbox-mcp-server-linux-amd64.sha256   (checksum)
+checksums.txt.asc                        (GPG signature)
+
+# checksums.txt content:
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  fritzbox-mcp-server-linux-amd64
+a3c1f... fritzbox-mcp-server-linux-arm64
+b2d4e... fritzbox-mcp-server-darwin-amd64
+...
+
+# Verify:
+gpg --verify checksums.txt.asc checksums.txt
+sha256sum -c checksums.txt
+----
+
+== Recommendations Summary
+
+[cols="1,2,2"]
+|===
+| Aspect | Unix/POSIX | Windows
+
+| Script language
+| POSIX shell (no bashisms)
+| PowerShell 5.1+
+
+| Security baseline
+| rustup + Homebrew patterns
+| Custom (no good examples exist)
+
+| Checksum verification
+| **REQUIRED** (SHA256)
+| **REQUIRED** (SHA256)
+
+| Installation location
+| `~/.local/bin/` (user-level)
+| `%USERPROFILE%\.local\bin\` (user-level)
+
+| PATH modification
+| ❌ NOT NEEDED
+| ❌ NOT NEEDED
+
+| Lines of code target
+| < 200 (like Zed)
+| < 150
+
+| Primary distribution method
+| **Manual download** (script = convenience)
+| **Manual download** (script = convenience)
+|===
+
+== Next Steps
+
+1. ✅ Draft POSIX shell install script
+2. ✅ Draft PowerShell install script
+3. ⬜ Generate GPG key for signing checksums
+4. ⬜ Update CI/CD to generate checksums + signatures
+5. ⬜ Document manual installation in README
+6. ⬜ Test scripts on: Fedora, Ubuntu, Debian, macOS, Windows 10/11
+7. ⬜ Security review by external party
+
+---
+
+.Document Information
+[horizontal]
+Version:: 1.0
+Date:: 2025-12-23
+Author:: Analysis for fritzbox-mcp-server installer design
