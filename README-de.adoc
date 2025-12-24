@@ -46,7 +46,7 @@ Installation anpassen:
 [source,bash]
 ----
 # Spezifische Version installieren
-FRITZBOX_MCP_VERSION=v0.4.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+FRITZBOX_MCP_VERSION=v0.6.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
 
 # In benutzerdefiniertes Verzeichnis installieren
 FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh

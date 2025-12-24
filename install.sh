@@ -165,7 +165,7 @@ resolve_version() {
     if [ -z "$response" ]; then
         log_error "Failed to query GitHub API for latest version"
         log_error "Please specify version explicitly with FRITZBOX_MCP_VERSION environment variable"
-        log_error "Example: FRITZBOX_MCP_VERSION=v0.4.0 sh install.sh"
+        log_error "Example: FRITZBOX_MCP_VERSION=v0.6.0 sh install.sh"
         exit 1
     fi
 
