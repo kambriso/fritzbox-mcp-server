@@ -287,6 +287,40 @@ All communication stays on your local network. Your credentials are stored local
 
 No cloud services. No external servers. Everything runs locally.
 
+== Token Usage Considerations
+
+This MCP server exposes **143 tools** to the AI assistant. Each tool definition (name, description, JSON schema) is sent with every message.
+
+=== Impact on Claude Code / Claude API
+
+* **Token overhead**: ~25,000-30,000 tokens per message just for tool definitions
+* **Cost estimate**: ~$0.08/message (Sonnet) or ~$0.45/message (Opus) in tool overhead
+* **Context usage**: Tool schemas consume context window space that could be used for conversation
+
+=== Recommendations
+
+==== For occasional use
+Disable the server when not needed:
+
+[source,bash]
+----
+# In Claude Code, disable the MCP server:
+claude --mcp-server fritzbox=off
+
+# Or remove from mcpServers in ~/.claude.json
+----
+
+==== For frequent use
+Consider enabling only for specific projects that need router access, rather than globally.
+
+==== For local LLMs
+If using this with local models (llama.cpp, Ollama), 143 tools may overwhelm smaller models. Use tool filtering to expose only needed tools.
+
+[TIP]
+====
+After the first message in a session, Claude's prompt caching reduces the token cost for subsequent messages. The overhead is most significant for short conversations.
+====
+
 == Support
 
 Issues:: https://github.com/kambriso/fritzbox-mcp-server/issues
