@@ -287,6 +287,15 @@ All communication stays on your local network. Your credentials are stored local
 
 No cloud services. No external servers. Everything runs locally.
 
+=== Binary Verification (v0.5.0)
+
+Independent VirusTotal scans confirm the binaries are clean:
+
+* https://www.virustotal.com/gui/file/3137edfa6438276495399ccdeb58751f1205d38426dbb827969dba299e5a731a[linux-amd64]
+* https://www.virustotal.com/gui/file/ace64b3d9dcb47476407938cfc010e888d481da49185c7f392901303d99786ed[linux-arm64]
+* https://www.virustotal.com/gui/file/65fb7ccad5d7e83210a788d1fc3e4b9a69c1dbaee2af81ada82fdb0474c26e36[darwin-arm64]
+* https://www.virustotal.com/gui/file/c4b0d05b2a4d60bb34d149974779d7115d31f4568dadd4843e6c5b3e275c5c17[windows-amd64]
+
 == Token Usage Considerations
 
 This MCP server exposes **143 tools** to the AI assistant. Each tool definition (name, description, JSON schema) is sent with every message.
