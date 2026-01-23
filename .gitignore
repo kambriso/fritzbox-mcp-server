@@ -1,0 +1,36 @@
+# Binaries (only in root directory)
+/fritz-mcp
+/fritzbox-mcp-server
+/test-device-info
+/fetch-xml
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# CRITICAL: Never commit credentials!
+.env
+config.yaml
+config.yml
+*.key
+*.pem
+credentials.json
+
+# Downloaded PDFs
+docs/avm/*.pdf
+
+# Distribution builds
+/dist/
+build

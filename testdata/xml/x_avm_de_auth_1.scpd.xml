@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:dslforum-org:service-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<actionList>
+<action>
+<name>GetInfo</name>
+<argumentList>
+<argument>
+<name>NewEnabled</name>
+<direction>out</direction>
+<relatedStateVariable>Enabled</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>GetState</name>
+<argumentList>
+<argument>
+<name>NewState</name>
+<direction>out</direction>
+<relatedStateVariable>State</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>SetConfig</name>
+<argumentList>
+<argument>
+<name>NewAction</name>
+<direction>in</direction>
+<relatedStateVariable>Action</relatedStateVariable>
+</argument>
+<argument>
+<name>NewState</name>
+<direction>out</direction>
+<relatedStateVariable>State</relatedStateVariable>
+</argument>
+<argument>
+<name>NewToken</name>
+<direction>out</direction>
+<relatedStateVariable>Token</relatedStateVariable>
+</argument>
+<argument>
+<name>NewMethods</name>
+<direction>out</direction>
+<relatedStateVariable>Methods</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+</actionList>
+<serviceStateTable>
+<stateVariable sendEvents="no">
+<name>Enabled</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>State</name>
+<dataType>string</dataType>
+<defaultValue></defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>Action</name>
+<dataType>string</dataType>
+<defaultValue></defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>Token</name>
+<dataType>string</dataType>
+<defaultValue></defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>Methods</name>
+<dataType>string</dataType>
+<defaultValue></defaultValue>
+</stateVariable>
+</serviceStateTable>
+</scpd>

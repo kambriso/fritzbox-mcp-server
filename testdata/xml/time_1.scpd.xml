@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:dslforum-org:service-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<actionList>
+<action>
+<name>GetInfo</name>
+<argumentList>
+<argument>
+<name>NewNTPServer1</name>
+<direction>out</direction>
+<relatedStateVariable>NTPServer1</relatedStateVariable>
+</argument>
+<argument>
+<name>NewNTPServer2</name>
+<direction>out</direction>
+<relatedStateVariable>NTPServer2</relatedStateVariable>
+</argument>
+<argument>
+<name>NewCurrentLocalTime</name>
+<direction>out</direction>
+<relatedStateVariable>CurrentLocalTime</relatedStateVariable>
+</argument>
+<argument>
+<name>NewLocalTimeZone</name>
+<direction>out</direction>
+<relatedStateVariable>LocalTimeZone</relatedStateVariable>
+</argument>
+<argument>
+<name>NewLocalTimeZoneName</name>
+<direction>out</direction>
+<relatedStateVariable>LocalTimeZoneName</relatedStateVariable>
+</argument>
+<argument>
+<name>NewDaylightSavingsUsed</name>
+<direction>out</direction>
+<relatedStateVariable>DaylightSavingsUsed</relatedStateVariable>
+</argument>
+<argument>
+<name>NewDaylightSavingsStart</name>
+<direction>out</direction>
+<relatedStateVariable>DaylightSavingsStart</relatedStateVariable>
+</argument>
+<argument>
+<name>NewDaylightSavingsEnd</name>
+<direction>out</direction>
+<relatedStateVariable>DaylightSavingsEnd</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>SetNTPServers</name>
+<argumentList>
+<argument>
+<name>NewNTPServer1</name>
+<direction>in</direction>
+<relatedStateVariable>NTPServer1</relatedStateVariable>
+</argument>
+<argument>
+<name>NewNTPServer2</name>
+<direction>in</direction>
+<relatedStateVariable>NTPServer2</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+</actionList>
+<serviceStateTable>
+<stateVariable sendEvents="no">
+<name>NTPServer1</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>NTPServer2</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>CurrentLocalTime</name>
+<dataType>dateTime</dataType>
+<defaultValue>0001-01-01T00:00:00</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>LocalTimeZone</name>
+<dataType>string</dataType>
+<defaultValue></defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>LocalTimeZoneName</name>
+<dataType>string</dataType>
+<defaultValue></defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>DaylightSavingsUsed</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>DaylightSavingsStart</name>
+<dataType>dateTime</dataType>
+<defaultValue>0001-01-01T00:00:00</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>DaylightSavingsEnd</name>
+<dataType>dateTime</dataType>
+<defaultValue>0001-01-01T00:00:00</defaultValue>
+</stateVariable>
+</serviceStateTable>
+</scpd>

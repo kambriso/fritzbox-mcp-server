@@ -1,0 +1,95 @@
+FRITZ!Box MCP Server - Usage Guide
+
+MODES:
+  1. MCP Server Mode (default)    - Interactive protocol server for AI agents
+  2. CLI Execution Mode           - Execute single action and exit
+
+=== MCP SERVER MODE (default) ===
+
+When invoked without flags, runs as an MCP protocol server via stdin/stdout.
+
+=== CLI EXECUTION MODE ===
+
+Execute a single TR-064 action from command line. Perfect for at/cron scheduling.
+
+Usage:
+  $ fritz-mcp --execute \
+      --service <service-type> \
+      --action <action-name> \
+      [--args <json>] \
+      [--quiet]
+
+Required:
+  --execute              Enable CLI mode
+  --service <type>       Service type URN (e.g., urn:dslforum-org:service:DeviceInfo:1)
+  --action <name>        Action name (e.g., GetInfo)
+
+Optional:
+  --args <json>          Arguments as JSON object (default: {})
+  --quiet                Suppress logs, only print result
+
+Examples:
+
+  # Get device information
+  $ fritz-mcp --execute \
+      --service "urn:dslforum-org:service:DeviceInfo:1" \
+      --action "GetInfo" \
+      --quiet
+
+  # Block device by IP
+  $ fritz-mcp --execute \
+      --service "urn:dslforum-org:service:X_AVM-DE_HostFilter:1" \
+      --action "DisallowWANAccessByIP" \
+      --args '{"NewIPv4Address":"192.168.178.35","NewDisallow":"1"}' \
+      --quiet
+
+  # Schedule with at (time-delayed blocking)
+  $ echo 'fritz-mcp --execute \
+      --service "urn:dslforum-org:service:X_AVM-DE_HostFilter:1" \
+      --action "DisallowWANAccessByIP" \
+      --args '"'"'{"NewIPv4Address":"192.168.178.35","NewDisallow":"1"}'"'"' \
+      --quiet' | at now + 20 minutes
+
+  # Daily cron job (block gaming console 22:00-06:00)
+  # Crontab: 0 22 * * * fritz-mcp --execute --service ... --quiet
+  # Crontab: 0 6  * * * fritz-mcp --execute --service ... --args '{"NewDisallow":"0"}' --quiet
+
+Discovery:
+  Use MCP mode to discover available services and actions:
+  - list_services     List all services
+  - list_actions      List actions for a service
+  - describe_action   Get action parameters
+
+OTHER OPTIONS:
+  --version             Show version and exit
+  --debug               Enable verbose debug logging
+  --xml-dir <path>      XML cache directory (default: ~/.cache/fritzbox-mcp-server)
+
+CONFIGURATION:
+  Credentials are read from .env file in:
+    1. Current directory (./.env)
+    2. ~/.config/fritzbox-mcp-server/.env
+    3. $XDG_CONFIG_HOME/fritzbox-mcp-server/.env
+
+  Required .env format:
+    FRITZ_HOST=fritz.box
+    FRITZ_PORT=49000
+    FRITZ_USERNAME=your-username
+    FRITZ_PASSWORD=your-password
+
+TIME-DELAYED ACTIONS (AI Agent Feature):
+  When using with AI agents, you can request time-delayed actions:
+
+  User: "Block Kevin's Nintendo Switch in 20 minutes"
+
+  The AI agent will:
+  1. Identify the device
+  2. Create an at job: echo 'fritz-mcp --execute ...' | at now + 20 minutes
+  3. Confirm with job ID for cancellation
+
+  This enables parental controls, scheduled maintenance, and automation
+  that no web GUI can provide.
+
+MORE INFO:
+  Documentation: https://github.com/kambriso/fritzbox-mcp-server
+  Issues: https://github.com/kambriso/fritzbox-mcp-server/issues

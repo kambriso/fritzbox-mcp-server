@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:dslforum-org:service-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<actionList>
+<action>
+<name>GetInfo</name>
+<argumentList>
+<argument>
+<name>NewEnable</name>
+<direction>out</direction>
+<relatedStateVariable>Enable</relatedStateVariable>
+</argument>
+<argument>
+<name>NewUPnPMediaServer</name>
+<direction>out</direction>
+<relatedStateVariable>UPnPMediaServer</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>SetConfig</name>
+<argumentList>
+<argument>
+<name>NewEnable</name>
+<direction>in</direction>
+<relatedStateVariable>Enable</relatedStateVariable>
+</argument>
+<argument>
+<name>NewUPnPMediaServer</name>
+<direction>in</direction>
+<relatedStateVariable>UPnPMediaServer</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+</actionList>
+<serviceStateTable>
+<stateVariable sendEvents="no">
+<name>Enable</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>UPnPMediaServer</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+</serviceStateTable>
+</scpd>

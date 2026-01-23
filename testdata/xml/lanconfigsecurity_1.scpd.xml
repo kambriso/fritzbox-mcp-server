@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:dslforum-org:service-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<actionList>
+<action>
+<name>GetInfo</name>
+<argumentList>
+<argument>
+<name>NewMaxCharsPassword</name>
+<direction>out</direction>
+<relatedStateVariable>MaxCharsPassword</relatedStateVariable>
+</argument>
+<argument>
+<name>NewMinCharsPassword</name>
+<direction>out</direction>
+<relatedStateVariable>MinCharsPassword</relatedStateVariable>
+</argument>
+<argument>
+<name>NewAllowedCharsPassword</name>
+<direction>out</direction>
+<relatedStateVariable>AllowedCharsPassword</relatedStateVariable>
+</argument>
+<argument>
+<name>NewAllowedCharsUsername</name>
+<direction>out</direction>
+<relatedStateVariable>AllowedCharsUsername</relatedStateVariable>
+</argument>
+<argument>
+<name>NewX_AVM-DE_IsDefaultPasswordActive</name>
+<direction>out</direction>
+<relatedStateVariable>X_AVM-DE_IsDefaultPasswordActive</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>X_AVM-DE_GetCurrentUser</name>
+<argumentList>
+<argument>
+<name>NewX_AVM-DE_CurrentUsername</name>
+<direction>out</direction>
+<relatedStateVariable>X_AVM-DE_CurrentUsername</relatedStateVariable>
+</argument>
+<argument>
+<name>NewX_AVM-DE_CurrentUserRights</name>
+<direction>out</direction>
+<relatedStateVariable>X_AVM-DE_CurrentUserRights</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>X_AVM-DE_GetAnonymousLogin</name>
+<argumentList>
+<argument>
+<name>NewX_AVM-DE_AnonymousLoginEnabled</name>
+<direction>out</direction>
+<relatedStateVariable>X_AVM-DE_AnonymousLoginEnabled</relatedStateVariable>
+</argument>
+<argument>
+<name>NewX_AVM-DE_ButtonLoginEnabled</name>
+<direction>out</direction>
+<relatedStateVariable>X_AVM-DE_ButtonLoginEnabled</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>SetConfigPassword</name>
+<argumentList>
+<argument>
+<name>NewPassword</name>
+<direction>in</direction>
+<relatedStateVariable>ConfigPassword</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>X_AVM-DE_GetUserList</name>
+<argumentList>
+<argument>
+<name>NewX_AVM-DE_UserList</name>
+<direction>out</direction>
+<relatedStateVariable>X_AVM-DE_UserList</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+</actionList>
+<serviceStateTable>
+<stateVariable sendEvents="no">
+<name>MaxCharsPassword</name>
+<dataType>ui2</dataType>
+<defaultValue>32</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>MinCharsPassword</name>
+<dataType>ui2</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>AllowedCharsPassword</name>
+<dataType>string</dataType>
+<defaultValue>0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz !&quot;#$%&amp;&apos;()*+,-./:;&lt;=&gt;?@[\]^_`{|}~</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>AllowedCharsUsername</name>
+<dataType>string</dataType>
+<defaultValue>0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz -._</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>ConfigPassword</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>X_AVM-DE_AnonymousLoginEnabled</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>X_AVM-DE_ButtonLoginEnabled</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>X_AVM-DE_CurrentUsername</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>X_AVM-DE_CurrentUserRights</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>X_AVM-DE_UserList</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>X_AVM-DE_IsDefaultPasswordActive</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+</serviceStateTable>
+</scpd>

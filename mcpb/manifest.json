@@ -1,0 +1,82 @@
+{
+  "manifest_version": "0.2",
+  "name": "fritzbox-mcp-server",
+  "display_name": "FRITZ!Box MCP Server",
+  "version": "0.0.0",
+  "description": "Control your AVM FRITZ!Box router through Claude - manage devices, WiFi, network settings, and parental controls with natural language",
+  "long_description": "# FRITZ!Box MCP Server\n\nA secure Model Context Protocol (MCP) server for interacting with AVM FRITZ!Box routers through AI assistants like Claude.\n\n## Key Features\n\n* **Runtime-driven & Model-agnostic**: Works with all FRITZ!Box models and firmware versions\n* **Automatic Discovery**: Discovers capabilities dynamically from your FRITZ!Box\n* **Secure by Design**: Credentials never leave your local machine\n* **Time-Delayed Actions**: Schedule network changes using at/cron (unique feature no GUI offers)\n* **Comprehensive Coverage**: Access to all TR-064 services (devices, WiFi, parental controls, VoIP, smart home)\n\n## Security First\n\n**Your FRITZ!Box credentials NEVER leave your machine.**\n\nThis MCP server runs entirely locally. Credentials are stored in a local `.env` file and only used to communicate with your FRITZ!Box on your local network. The AI assistant receives only the results of API calls, never your credentials.\n\n## Example Use Cases\n\n* \"What devices are connected to my WiFi?\"\n* \"Show me my current internet connection status\"\n* \"Analyze my network health\"\n* \"Block Kevin's Nintendo Switch in 20 minutes\" (time-delayed parental control)\n* \"Prioritize bandwidth for my work laptop\"\n* \"List all smart home devices\"",
+  "author": {
+    "name": "Kambrium Software GmbH",
+    "url": "https://github.com/jhinrichsen"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jhinrichsen/fritzbox-mcp-server"
+  },
+  "homepage": "https://github.com/jhinrichsen/fritzbox-mcp-server",
+  "documentation": "https://github.com/jhinrichsen/fritzbox-mcp-server#readme",
+  "support": "https://github.com/jhinrichsen/fritzbox-mcp-server/issues",
+  "license": "Proprietary",
+  "keywords": [
+    "fritzbox",
+    "avm",
+    "router",
+    "network",
+    "home automation",
+    "parental controls",
+    "tr-064",
+    "wifi",
+    "devices"
+  ],
+  "server": {
+    "type": "binary",
+    "mcp_config": {
+      "command": "${__dirname}/bin/linux-amd64/fritz-mcp",
+      "args": [],
+      "env": {},
+      "platform_overrides": {
+        "darwin": {
+          "x64": {
+            "command": "${__dirname}/bin/darwin-amd64/fritz-mcp"
+          },
+          "arm64": {
+            "command": "${__dirname}/bin/darwin-arm64/fritz-mcp"
+          }
+        },
+        "linux": {
+          "x64": {
+            "command": "${__dirname}/bin/linux-amd64/fritz-mcp"
+          },
+          "arm64": {
+            "command": "${__dirname}/bin/linux-arm64/fritz-mcp"
+          }
+        },
+        "win32": {
+          "x64": {
+            "command": "${__dirname}/bin/windows-amd64/fritz-mcp.exe"
+          },
+          "arm64": {
+            "command": "${__dirname}/bin/windows-arm64/fritz-mcp.exe"
+          }
+        }
+      }
+    }
+  },
+  "tools_generated": true,
+  "compatibility": {
+    "clients": {
+      "claude-desktop": ">=0.10.0"
+    }
+  },
+  "privacy_policies": [
+    {
+      "title": "Privacy Policy",
+      "url": "https://github.com/jhinrichsen/fritzbox-mcp-server#privacy--security",
+      "description": "All communication stays local. No data is sent to external servers. Credentials are stored locally only."
+    }
+  ],
+  "_meta": {
+    "config_instructions": "# Configuration Required\n\nBefore using this extension, you must create a `.env` file with your FRITZ!Box credentials:\n\n**Global config (recommended):**\n```\nmkdir -p ~/.config/fritzbox-mcp-server\n```\n\nCreate `~/.config/fritzbox-mcp-server/.env` with:\n```\nFRITZ_HOST=fritz.box\nFRITZ_PORT=49000\nFRITZ_USERNAME=your-username\nFRITZ_PASSWORD=your-password\n```\n\n**Security:** Set proper permissions: `chmod 600 ~/.config/fritzbox-mcp-server/.env`\n\n**FRITZ!Box User Permissions:** The user account must have **FRITZ!Box-Einstellungen** permission enabled in your FRITZ!Box web interface under System → FRITZ!Box-Benutzer.",
+    "setup_required": true
+  }
+}

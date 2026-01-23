@@ -1,16 +1,21 @@
 = FRITZ!Box MCP Server
+:toc: left
+:toclevels: 3
+:sectnums:
 
 Control your FRITZ!Box router through AI assistants like Claude using natural language.
 
-link:README-de.adoc[🇩🇪 Deutsche Version]
+link:README-de.adoc[🇩🇪 Deutsche Version] | link:COMPARISON.adoc[Comparison with Other Solutions] | link:CHANGELOG.adoc[Changelog]
 
 https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
 
-== What is this?
+== Introduction
+
+=== What is this?
 
 This MCP server lets you interact with your FRITZ!Box router using AI assistants. Ask questions in plain language, analyze your network, manage devices, troubleshoot issues, and configure settings without touching the web interface.
 
-== How it works (Security Architecture)
+=== How it works (Security Architecture)
 
 image::architecture.svg[Architecture Diagram]
 
@@ -28,17 +33,19 @@ Critical security features:
 * Credentials stay on your computer
 * All router communication happens on your local network only
 
-== Why use this?
+=== Why use this?
 
 Works with ALL FRITZ!Box models and firmware versions. When AVM releases new features or models, this server adapts automatically. No updates needed.
 
 Unlike other solutions that break with firmware updates or only work with specific models, this server discovers your router's capabilities in real-time.
 
-== Quick Start
+== User Guide
 
-=== 1. Installation
+=== Quick Start
 
-==== Automated Installation (Linux/macOS - Recommended)
+==== 1. Installation
+
+===== Automated Installation (Linux/macOS - Recommended)
 
 Download and install with automatic checksum verification:
 
@@ -69,7 +76,7 @@ FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent
 ----
 ====
 
-==== Manual Installation (All platforms)
+===== Manual Installation (All platforms)
 
 Get the binary for your system from https://github.com/kambriso/fritzbox-mcp-server/releases[Releases]:
 
@@ -86,7 +93,7 @@ chmod +x fritz-mcp
 
 Windows: Extract the ZIP file.
 
-=== 2. Create Configuration File
+==== 2. Create Configuration File
 
 Create a file named `.env` with your FRITZ!Box credentials:
 
@@ -112,7 +119,7 @@ This file contains your password. Keep it secure and never commit it to version 
 On Linux/macOS, restrict access: `chmod 600 ~/.config/fritzbox-mcp-server/.env`
 ====
 
-=== 3. FRITZ!Box User Permissions
+==== 3. FRITZ!Box User Permissions
 
 Your FRITZ!Box user needs full settings access.
 
@@ -121,7 +128,7 @@ In the FRITZ!Box web interface (http://fritz.box):
 1. Go to System → FRITZ!Box-Benutzer → [Your User] → Berechtigungen
 2. Enable: "FRITZ!Box-Einstellungen" (or "The user can view and edit all FRITZ!Box settings")
 
-=== 4. Configure Claude Desktop
+==== 4. Configure Claude Desktop
 
 Edit your Claude Desktop config file:
 
@@ -153,9 +160,9 @@ macOS/Linux with manual install: Absolute path to where you placed the binary, e
 
 Restart Claude Desktop.
 
-== What can you do?
+=== What can you do?
 
-=== Ask Questions
+==== Ask Questions
 
 "What's my external IP address?"
 
@@ -167,7 +174,7 @@ Restart Claude Desktop.
 
 "Is my WiFi secure?"
 
-=== Analyze Your Network
+==== Analyze Your Network
 
 "Analyze my network health and tell me if everything looks good"
 
@@ -194,7 +201,7 @@ patterns, but not concerning as an isolated incident.
 Overall: Network operating optimally.
 ----
 
-=== Manage Devices
+==== Manage Devices
 
 "Show all WiFi devices"
 
@@ -204,7 +211,7 @@ Overall: Network operating optimally.
 
 "Prioritize my laptop's bandwidth - I have a video call"
 
-=== Parental Controls & Scheduling
+==== Parental Controls & Scheduling
 
 "Block the Nintendo Switch in 20 minutes"
 
@@ -212,7 +219,7 @@ Overall: Network operating optimally.
 
 "Enable guest WiFi at 6 PM for the party"
 
-=== Troubleshooting
+==== Troubleshooting
 
 "Why is my internet slow?"
 
@@ -220,9 +227,9 @@ Overall: Network operating optimally.
 
 "Show me recent disconnections"
 
-== Examples
+=== Examples
 
-=== Network Health Check
+==== Network Health Check
 
 Prompt: "Analyze my network health and check if everything is running optimally"
 
@@ -235,7 +242,7 @@ Claude autonomously:
 5. Distinguishes normal behavior from issues
 6. Provides recommendations
 
-=== Device Inventory
+==== Device Inventory
 
 Prompt: "Show me all devices - which are online and are there any unknown devices?"
 
@@ -247,7 +254,7 @@ Claude:
 4. Identifies unknown or suspicious devices
 5. Provides security analysis
 
-=== Time-Delayed Actions
+==== Time-Delayed Actions
 
 Prompt: "Block the gaming console in 20 minutes"
 
@@ -255,9 +262,9 @@ Claude schedules the action to execute automatically, even after you close the c
 
 This uses the server's CLI mode for persistent background execution.
 
-== Troubleshooting
+=== Troubleshooting
 
-=== Cannot connect to FRITZ!Box
+==== Cannot connect to FRITZ!Box
 
 Check that your router is reachable:
 [source,bash]
@@ -269,7 +276,7 @@ Verify credentials in `.env` file.
 
 Ensure your FRITZ!Box user has full settings permission enabled.
 
-=== Claude Desktop doesn't see the server
+==== Claude Desktop doesn't see the server
 
 Verify the path in `claude_desktop_config.json` is absolute and correct.
 
@@ -277,17 +284,17 @@ Windows users: Use double backslashes in paths.
 
 Restart Claude Desktop after config changes.
 
-=== Permission errors
+==== Permission errors
 
 Your FRITZ!Box user needs "FRITZ!Box-Einstellungen" permission enabled. See configuration section above.
 
-== Privacy & Security
+=== Privacy & Security
 
 All communication stays on your local network. Your credentials are stored locally in a `.env` file and used only to communicate with your FRITZ!Box. The AI receives only the results of operations, never your credentials.
 
 No cloud services. No external servers. Everything runs locally.
 
-=== Binary Verification (v0.5.0)
+==== Binary Verification (v0.5.0)
 
 Independent VirusTotal scans confirm the binaries are clean:
 
@@ -296,19 +303,19 @@ Independent VirusTotal scans confirm the binaries are clean:
 * https://www.virustotal.com/gui/file/65fb7ccad5d7e83210a788d1fc3e4b9a69c1dbaee2af81ada82fdb0474c26e36[darwin-arm64]
 * https://www.virustotal.com/gui/file/c4b0d05b2a4d60bb34d149974779d7115d31f4568dadd4843e6c5b3e275c5c17[windows-amd64]
 
-== Token Usage Considerations
+=== Token Usage Considerations
 
-This MCP server exposes **143 tools** to the AI assistant. Each tool definition (name, description, JSON schema) is sent with every message.
+This MCP server exposes 143 tools to the AI assistant. Each tool definition (name, description, JSON schema) is sent with every message.
 
-=== Impact on Claude Code / Claude API
+==== Impact on Claude Code / Claude API
 
-* **Token overhead**: ~25,000-30,000 tokens per message just for tool definitions
-* **Cost estimate**: ~$0.08/message (Sonnet) or ~$0.45/message (Opus) in tool overhead
-* **Context usage**: Tool schemas consume context window space that could be used for conversation
+* Token overhead: ~25,000-30,000 tokens per message just for tool definitions
+* Cost estimate: ~$0.08/message (Sonnet) or ~$0.45/message (Opus) in tool overhead
+* Context usage: Tool schemas consume context window space that could be used for conversation
 
-=== Recommendations
+==== Recommendations
 
-==== For occasional use
+===== For occasional use
 Disable the server when not needed:
 
 [source,bash]
@@ -319,16 +326,543 @@ claude --mcp-server fritzbox=off
 # Or remove from mcpServers in ~/.claude.json
 ----
 
-==== For frequent use
+===== For frequent use
 Consider enabling only for specific projects that need router access, rather than globally.
 
-==== For local LLMs
+===== For local LLMs
 If using this with local models (llama.cpp, Ollama), 143 tools may overwhelm smaller models. Use tool filtering to expose only needed tools.
 
 [TIP]
 ====
 After the first message in a session, Claude's prompt caching reduces the token cost for subsequent messages. The overhead is most significant for short conversations.
 ====
+
+== Developer Guide
+
+=== Architecture
+
+This server is runtime-driven and model-agnostic:
+
+* No hardcoded TR-064 service structs
+* Discovers capabilities dynamically from your FRITZ!Box's XML descriptors
+* Works with firmware updates automatically
+* Supports all FRITZ!Box models (tested with 7490, 7590)
+
+=== MCP SDK Choice
+
+This project uses the community MCP SDK (https://github.com/mark3labs/mcp-go[mark3labs/mcp-go] v0.7.0) instead of the official SDK (modelcontextprotocol/go-sdk) due to compatibility issues with Claude Code:
+
+* Official SDK issues: Tools fail to appear in Claude Code despite proper registration
+** https://github.com/modelcontextprotocol/go-sdk/issues/395[Issue #395]: Initialization race conditions and client timeouts
+** https://github.com/modelcontextprotocol/go-sdk/issues/200[Issue #200]: Schema generation issues with pointer types (fixed in PR #338)
+* Community SDK: Battle-tested with Claude Code, no known compatibility issues
+* API incompatibility: The two SDKs are not API-compatible (see https://github.com/modelcontextprotocol/go-sdk/blob/main/design/design.md[official SDK design doc])
+
+The official SDK uses a different JSON-RPC implementation and lower-level transport interface. While both SDKs work standalone, the community SDK has proven more reliable for stdio transport with Claude Code clients.
+
+=== Development Setup
+
+==== Prerequisites
+
+* Go 1.25 or later
+* A FRITZ!Box router on your local network for testing
+* FRITZ!Box username and password
+
+==== Clone and Build
+
+[source,bash]
+----
+git clone git@github.com:kambriso/fritz-mcp.git
+cd fritz-mcp
+make help  # See available build targets
+----
+
+==== Configuration
+
+Create `.env` file with your FRITZ!Box credentials:
+
+[source,bash]
+----
+cp .env.example .env
+# Edit with your credentials
+editor .env
+----
+
+Required variables:
+[source,bash]
+----
+FRITZ_HOST=fritz.box          # FRITZ!Box hostname or IP
+FRITZ_PORT=49000              # TR-064 port (default: 49000)
+FRITZ_USERNAME=your-username  # FRITZ!Box username
+FRITZ_PASSWORD=your-password  # FRITZ!Box password
+----
+
+==== FRITZ!Box User Permissions
+
+The user account must have FRITZ!Box-Einstellungen permission enabled:
+
+* German: "Der Benutzer kann alle Einstellungen der FRITZ!Box sehen und bearbeiten"
+* English: "The user can view and edit all FRITZ!Box settings"
+
+Configure in FRITZ!Box web UI:
+
+`System → FRITZ!Box-Benutzer → [Your User] → Berechtigungen`
+
+Enable the checkbox for "FRITZ!Box-Einstellungen".
+
+=== Building
+
+==== Development Build
+
+[source,bash]
+----
+make build
+./fritz-mcp
+----
+
+==== Production Builds
+
+Build for all supported platforms:
+
+[source,bash]
+----
+make dists
+----
+
+This creates binaries in `dist/` for:
+* Linux (amd64, arm64, 386, arm)
+* macOS (amd64, arm64)
+* Windows (amd64, arm64)
+* WASI (wasm) - WebAssembly with limited functionality
+
+==== WASI Build Notes
+
+A WASI (WebAssembly System Interface) build is included to demonstrate code portability. However, Go's wasip1 target has significant limitations for network applications:
+
+* ❌ No network access - Go only supports WASI Preview 1, which lacks socket APIs
+* ❌ Restricted file system access
+* ✅ Provides capability-based security sandbox
+
+NOTE: While WasmEdge supports sockets and WASI Preview 2 includes wasi-sockets, Go currently only targets wasip1 (sealed without networking). WASI Preview 2 launched in January 2024, but Go has no announced timeline for GOOS=wasip2 support (tracked in https://github.com/golang/go/issues/65333[Issue #65333]). Go 1.24 (Feb 2025) and Go 1.25 (Aug 2025) do not include wasip2.
+
+Recommendation: Use native binaries or multi-arch containers for production. The WASI build demonstrates WebAssembly portability but cannot function as a network service with current Go releases.
+
+Build for specific platform:
+
+[source,bash]
+----
+GOOS=linux GOARCH=amd64 make dist
+GOOS=darwin GOARCH=arm64 make dist
+GOOS=windows GOARCH=amd64 make dist
+----
+
+=== Testing
+
+==== Unit Tests
+
+[source,bash]
+----
+go test -v ./...
+----
+
+==== Integration Test: Device Info
+
+Test your FRITZ!Box connection:
+
+[source,bash]
+----
+go build -o test-device-info ./cmd/test-device-info
+./test-device-info
+----
+
+See link:cmd/test-device-info/README.md[cmd/test-device-info/README.md] for details.
+
+==== XML Fetching
+
+Fetch TR-064 XML descriptors without authentication:
+
+[source,bash]
+----
+./fritz-mcp --fetch-xml
+----
+
+This downloads service descriptors to `xml/` directory for offline analysis.
+
+=== Project Structure
+
+[source]
+----
+.
+├── cmd/
+│   ├── fritz-mcp/          # Main MCP server binary
+│   └── test-device-info/   # Integration test tool
+├── xml/                    # Cached TR-064 XML descriptors
+├── dist/                   # Built binaries (created by make dist)
+├── config.go               # Configuration loading
+├── tr064.go               # TR-064 client implementation
+├── spec.go                # Service discovery and spec parsing
+├── mcp.go                 # MCP server implementation
+├── docs.go                # Documentation index
+└── Makefile               # Build targets
+----
+
+=== Development Workflow
+
+1. Make changes to source code
+2. Run tests: `go test -v ./...`
+3. Build: `make build`
+4. Test locally with your FRITZ!Box
+5. Build distributable binaries: `make dist`
+
+=== Release Process
+
+Releases are automatically published to the public repository when a version tag is pushed.
+
+==== Setup
+
+The `PUBLIC_REPO_TOKEN` secret is configured and ready for releases.
+
+==== Creating a Release
+
+[source,bash]
+----
+# Ensure all tests pass
+make check
+
+# Tag the release (use semantic versioning)
+git tag v1.0.0
+
+# Push the tag to trigger the release workflow
+git push origin v1.0.0
+----
+
+The GitHub Actions workflows will:
+
+Release workflow (link:.github/workflows/release.yml[release.yml]):
+1. Build binaries for all platforms (Linux, macOS, Windows, WASI)
+2. Generate SHA256 checksums
+3. Create a release in https://github.com/kambriso/fritzbox-mcp-server
+4. Upload all binaries and checksums
+
+Container workflow (link:.github/workflows/container.yml[container.yml]):
+1. Build WASI container image (tagged with `-wasi` suffix)
+2. Build multi-arch container (linux/amd64, linux/arm64)
+3. Publish to ghcr.io/kambriso/fritzbox-mcp-server
+
+NOTE: Use the multi-arch container for production. The WASI container demonstrates portability but Go's wasip1 target lacks network support (pending wasip2 support in future Go versions).
+
+==== Supported Release Platforms
+
+Binaries::
+* Linux: amd64, arm64, 386, arm
+* macOS: amd64 (Intel), arm64 (Apple Silicon)
+* Windows: amd64, arm64
+* WASI: wasm (Go wasip1 - no network support until wasip2)
+
+Container Images::
+* Multi-arch: linux/amd64, linux/arm64 (recommended for production)
+* WASI: wasm (portability demo - Go wasip1 lacks network APIs)
+
+== Technical Reference
+
+=== Runtime Discovery Architecture
+
+This server is designed to be runtime-driven and model-agnostic. It does not contain any hardcoded TR-064 service structures.
+
+==== Design Principles
+
+* No static, model-specific Go structs for TR-064 services
+* No dependency on any cloud for auth, logic, or docs
+* Discovery of TR-064 services/actions from runtime XML
+* Typed MCP tools generated at runtime (from XML + PDFs)
+* Same MCP binary works with new firmware and models automatically
+
+==== Key Components
+
+===== Config (internal/config)
+
+[source,bash]
+----
+File: .env (never sent to LLM, local only)
+
+Required keys:
+- FRITZ_HOST=fritz.box (or IP)
+- FRITZ_PORT=49000
+- FRITZ_USERNAME=...
+- FRITZ_PASSWORD=...
+- FRITZ_TLS=false (optional, for 49443 later)
+----
+
+===== TR-064 Core Client (internal/tr064)
+
+Minimal types:
+
+* Client
+** BaseURL (http://host:port)
+** HTTPClient http.Client
+** auth state (nonce, realm, secret, etc.)
+* Call(ctx, svc spec.ServiceSpec, act spec.ActionSpec, in map[string]string) (map[string]string, error)
+
+All TR-064 argument values represented as map[string]string.
+
+Authentication:
+
+* Implements AVM TR-064 auth (SOAP/ClientAuth variant)
+* First request: without auth → expect challenge response from FRITZ!Box
+* Parse nonce/realm/etc. from response
+* Compute MD5-based token (per AVM TR-064 First Steps doc)
+* Include proper SOAP auth header in subsequent calls
+* Cache auth; on auth failure, retry once with fresh challenge
+
+SOAP and XML handling:
+
+* Use encoding/xml only in this package
+* For requests:
+** Use ActionSpec.In slice to determine argument order
+** Never iterate over Go maps for argument order
+** For each ArgSpec in In: look up in[arg.Name] and emit `<arg.Name>value</arg.Name>` in that order
+* For responses:
+** Parse `<u:ActionNameResponse>`
+** Each child element becomes an entry in map[string]string: key = XML element name (e.g. NewModelName), value = inner text
+
+No TR-064 field names are hardcoded outside this package.
+
+===== TR-064 Spec Registry (internal/spec)
+
+Dynamic spec representation:
+
+[source,go]
+----
+type ArgSpec struct {
+    Name            string   // NewModelName
+    Direction       string   // in | out
+    RelatedStateVar string
+    AllowedValues   []string // from allowedValueList
+    DataType        string   // string, ui4, boolean, ...
+}
+
+type ActionSpec struct {
+    ServiceType string       // urn:dslforum-org:service:DeviceInfo:1
+    Name        string       // GetInfo
+    In          []ArgSpec
+    Out         []ArgSpec
+}
+
+type ServiceSpec struct {
+    ServiceType string
+    ControlURL  string
+    SCPDURL     string
+    Actions     map[string]*ActionSpec
+}
+
+type Registry struct {
+    Services map[string]*ServiceSpec
+}
+----
+
+Load from FRITZ!Box:
+
+Function: `LoadFromFritz(ctx context.Context, c *tr064.Client, baseURL string) (*Registry, error)`
+
+Steps:
+
+1. GET baseURL + "/tr64desc.xml"
+2. Parse device and serviceList:
+   * For each `<service>`: serviceType, controlURL, SCPDURL
+3. For each service:
+   * GET SCPDURL
+   * Parse SCPD: `<actionList>` into ActionSpec, `<argumentList>` with direction, `<serviceStateTable>` to fill DataType and AllowedValues
+4. Build Registry.Services[serviceType] = ServiceSpec
+
+Everything is discovered at runtime, per device and firmware.
+
+===== Typed MCP API (runtime-generated)
+
+On startup, after:
+
+* config.Load
+* tr064.Client created
+* spec.LoadFromFritz
+* optional initial DeviceInfo:GetInfo
+* docs index loaded
+
+Build a set of MCP tools in memory from the registry.
+
+For each (serviceType, actionName) you choose to expose:
+
+* Generate one MCP tool definition with:
+** name
+** JSON input schema
+** JSON output schema
+** description from docs.Lookup
+
+No compile-time knowledge of DeviceInfo, Hosts, or WLAN required.
+
+Naming strategy:
+
+For mechanical FRITZ-specific naming:
+
+* tool_name = sanitize(serviceType_short + "_" + actionName)
+
+Examples:
+
+* urn:dslforum-org:service:DeviceInfo:1 → deviceinfo
+* action GetInfo → deviceinfo_get_info
+
+JSON schemas:
+
+Input JSON (for a given tool):
+
+* Object with properties derived from ActionSpec.In
+* Each property name is the TR-064 arg name (e.g. NewMACAddress)
+* Type mapping from DataType:
+** string → JSON string
+** boolean → JSON boolean
+** ui1, ui2, ui4, i4 → JSON number
+** allowedValueList → JSON string with enum restriction (optional enforcement)
+
+Output JSON:
+
+* Single object with out_args:
+
+[source,json]
+----
+{
+  "out_args": {
+    "NewManufacturerName": "...",
+    "NewModelName": "...",
+    "NewSoftwareVersion": "...",
+    "..."
+  }
+}
+----
+
+===== Introspection and discovery MCP tools
+
+Add tools so the LLM does not have to guess argument and service names.
+
+list_services::
+Input: none
++
+Output: array of services with service_type and control_url
+
+list_actions::
+Input: service_type
++
+Output: array of actions with action name, in_args, out_args
+
+describe_action::
+Input: service_type, action
++
+Output: service_type, action, doc, in_args, out_args
+
+call_action::
+Execute any TR-064 action on the FRITZ!Box. Use list_services and describe_action to discover available actions and their parameters.
+
+==== Runtime flow
+
+At process start:
+
+1. Load .env → config.Config
+2. Create tr064.Client
+3. LoadFromFritz(...) → Registry
+4. Optionally call DeviceInfo:GetInfo to log model and firmware
+5. Build docs index (internal/docs)
+6. Generate MCP tools from Registry and docs
+7. Start MCP server loop (stdio)
+
+At tool call:
+
+* Resolve tool → (serviceType, actionName)
+* Map JSON input to map[string]string for in args
+* Lookup ServiceSpec and ActionSpec in Registry
+* Call tr064.Client.Call(...) using ordered ActionSpec.In
+* Convert result map[string]string to JSON out_args
+
+=== TR-064 Services Reference
+
+Generated from:
+
+* https://fritz.support/schnittstellen/TR-064_overview.pdf[TR-064 Support – Overview (PDF)]
+* https://fritz.support/resources/TR-064_Device_Info.pdf[TR-064 Support – DeviceInfo (PDF)]
+* https://fritz.support/resources/TR-064_First_Steps.pdf[TR-064 – First Steps (PDF)]
+* https://fritz.com/pages/schnittstellen[FRITZ! Interfaces overview page]
+
+==== Standard TR-064 services
+
+* `deviceconfig`
+* `deviceinfo`
+* `hosts`
+* `lanconfigsecurity`
+* `lanethernetifcfg`
+* `lanhostconfigmgm`
+* `lanifconfig`
+* `layer3forwarding`
+* `mgmsrv`
+* `time`
+* `userif`
+* `wancommonifconfig`
+* `wandslifconfig`
+* `wandsllinkconfig`
+* `wanethlinkconfig`
+* `wanipconn`
+* `wanpppconn`
+* `wlanconfig`
+
+==== FRITZ!-specific extensions (X_AVM-DE / X_)
+
+* `X_AVM-DE_AppSetup`
+* `X_AVM-DE_Auth`
+* `X_AVM-DE_OnTel`
+* `X_AVM-DE_Dect`
+* `X_AVM-DE_Filelinks`
+* `X_AVM-DE_Homeauto`
+* `X_AVM-DE_Homeplug`
+* `X_AVM-DE_HostFilter`
+* `X_AVM-DE_Media`
+* `X_AVM-DE_MyFritz`
+* `X_AVM-DE_Remote`
+* `X_AVM-DE_Speedtest`
+* `X_AVM-DE_Storage`
+* `X_AVM-DE_TAM`
+* `X_AVM-DE_UPnP`
+* `X_AVM-DE_USPController`
+* `X_AVM-DE_WANFiber`
+* `X_AVM-DE_WANMobileConnection`
+* `X_VoIP`
+* `X_AVM-DE_WebDAV`
+
+NOTE: Actual availability per device (FRITZ!Box vs Repeater) is defined in the TR-064 Overview table; your runtime client should always discover services from `/tr64desc.xml`.
+
+==== Example Service: deviceinfo
+
+Service name:: `deviceinfo`
+Service ID (SCPD):: `urn:DeviceInfo-com:serviceId:DeviceInfo1`
+Spec:: https://fritz.support/resources/TR-064_Device_Info.pdf[TR-064 Support – DeviceInfo (PDF)]
+
+This service exposes general information about the FRITZ! device: manufacturer, model, serial, hardware/firmware version, and uptime.
+
+===== Key action: GetInfo
+
+Returns a snapshot of general device information.
+
+Action name:: `GetInfo`
+
+Output arguments::
+Each of these is returned as an "out" parameter by the SOAP action:
++
+* `NewManufacturerName` → manufacturer name (e.g. FRITZ!)
+* `NewManufacturerOUI` → manufacturer OUI
+* `NewModelName` → model name (e.g. FRITZ!Box 5530 Fiber)
+* `NewDescription` → human-readable description
+* `NewProductClass` → product class
+* `NewSerialNumber` → device serial number
+* `NewSoftwareVersion` → firmware/software version
+* `NewHardwareVersion` → hardware revision
+* `NewSpecVersion` → TR-064 spec version implemented
+* `NewProvisioningCode` → provisioning code (if used)
+* `NewUpTime` → device uptime (seconds)
+* `NewDeviceLog` → implementation-specific device log string
 
 == Support
 

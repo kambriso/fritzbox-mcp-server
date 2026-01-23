@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<scpd xmlns="urn:dslforum-org:service-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<actionList>
+<action>
+<name>GetInfo</name>
+<argumentList>
+<argument>
+<name>NewEnable</name>
+<direction>out</direction>
+<relatedStateVariable>Enable</relatedStateVariable>
+</argument>
+<argument>
+<name>NewHostURL</name>
+<direction>out</direction>
+<relatedStateVariable>HostURL</relatedStateVariable>
+</argument>
+<argument>
+<name>NewUsername</name>
+<direction>out</direction>
+<relatedStateVariable>Username</relatedStateVariable>
+</argument>
+<argument>
+<name>NewMountpointName</name>
+<direction>out</direction>
+<relatedStateVariable>MountpointName</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+<action>
+<name>SetConfig</name>
+<argumentList>
+<argument>
+<name>NewEnable</name>
+<direction>in</direction>
+<relatedStateVariable>Enable</relatedStateVariable>
+</argument>
+<argument>
+<name>NewHostURL</name>
+<direction>in</direction>
+<relatedStateVariable>HostURL</relatedStateVariable>
+</argument>
+<argument>
+<name>NewUsername</name>
+<direction>in</direction>
+<relatedStateVariable>Username</relatedStateVariable>
+</argument>
+<argument>
+<name>NewPassword</name>
+<direction>in</direction>
+<relatedStateVariable>Password</relatedStateVariable>
+</argument>
+<argument>
+<name>NewMountpointName</name>
+<direction>in</direction>
+<relatedStateVariable>MountpointName</relatedStateVariable>
+</argument>
+</argumentList>
+</action>
+</actionList>
+<serviceStateTable>
+<stateVariable sendEvents="no">
+<name>Enable</name>
+<dataType>boolean</dataType>
+<defaultValue>0</defaultValue>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>HostURL</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>Username</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>Password</name>
+<dataType>string</dataType>
+</stateVariable>
+<stateVariable sendEvents="no">
+<name>MountpointName</name>
+<dataType>string</dataType>
+</stateVariable>
+</serviceStateTable>
+</scpd>
