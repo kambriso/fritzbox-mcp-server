@@ -3,6 +3,8 @@ variables:
 
 test:
   image: golang:1.25
+  except:
+    - tags
   script:
     - make tidy
     - make test
