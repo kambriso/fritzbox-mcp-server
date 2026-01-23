@@ -26,23 +26,22 @@ jobs:
       - name: Build release binaries
         run: make dists
 
-      - name: Generate checksums
+      - name: Prepare release files
         run: |
-          cd build
-          find . -type f \( -name 'fritz-mcp*' -o -name '*.wasm' \) | sort | xargs sha256sum > SHA256SUMS
+          mkdir -p release
+          cp build/linux/amd64/fritz-mcp release/fritz-mcp-linux-amd64
+          cp build/linux/arm64/fritz-mcp release/fritz-mcp-linux-arm64
+          cp build/linux/386/fritz-mcp release/fritz-mcp-linux-386
+          cp build/linux/arm/fritz-mcp release/fritz-mcp-linux-arm
+          cp build/darwin/amd64/fritz-mcp release/fritz-mcp-darwin-amd64
+          cp build/darwin/arm64/fritz-mcp release/fritz-mcp-darwin-arm64
+          cp build/windows/amd64/fritz-mcp.exe release/fritz-mcp-windows-amd64.exe
+          cp build/windows/arm64/fritz-mcp.exe release/fritz-mcp-windows-arm64.exe
+          cp build/wasi/wasm/fritz-mcp.wasm release/fritz-mcp.wasm
+          cd release && sha256sum fritz-mcp-* > SHA256SUMS
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: |
-            build/linux/amd64/fritz-mcp
-            build/linux/arm64/fritz-mcp
-            build/linux/386/fritz-mcp
-            build/linux/arm/fritz-mcp
-            build/darwin/amd64/fritz-mcp
-            build/darwin/arm64/fritz-mcp
-            build/windows/amd64/fritz-mcp.exe
-            build/windows/arm64/fritz-mcp.exe
-            build/wasi/wasm/fritz-mcp.wasm
-            build/SHA256SUMS
+          files: release/*
