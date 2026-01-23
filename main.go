@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	fritzbox "github.com/jhinrichsen/fritzbox-mcp-server"
 	"github.com/mark3labs/mcp-go/server"
 )
 
@@ -68,7 +67,7 @@ func run() error {
 
 	// Set default XML directory if not specified
 	if *xmlDir == "" {
-		*xmlDir = fritzbox.GetCacheDir()
+		*xmlDir = GetCacheDir()
 	}
 
 	ctx := context.Background()
@@ -81,7 +80,7 @@ func run() error {
 	// If --fetch-xml flag is set, only fetch XML and exit (no auth required)
 	if *fetchXMLOnly {
 		// Try to load minimal config (only FRITZ_HOST needed)
-		cfg, _ := fritzbox.Load()
+		cfg, _ := Load()
 		var baseURL string
 		if cfg == nil {
 			// Load failed, try environment directly
@@ -99,7 +98,7 @@ func run() error {
 		}
 
 		log.Printf("Fetching TR-064 XML files from %s to %s/", baseURL, *xmlDir)
-		if err := fritzbox.FetchAllXML(ctx, baseURL, *xmlDir); err != nil {
+		if err := FetchAllXML(ctx, baseURL, *xmlDir); err != nil {
 			return fmt.Errorf("failed to fetch XML: %w", err)
 		}
 		log.Println("✓ XML files fetched successfully")
@@ -122,7 +121,7 @@ func run() error {
 
 	// Step 1: Load full configuration (requires auth credentials)
 	log.Println("Loading configuration...")
-	cfg, err := fritzbox.Load()
+	cfg, err := Load()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -130,11 +129,11 @@ func run() error {
 
 	// Step 2: Create TR-064 client
 	log.Println("Creating TR-064 client...")
-	tr064Client := fritzbox.NewClient(cfg.BaseURL(), cfg.Username, cfg.Password, *debug)
+	tr064Client := NewClient(cfg.BaseURL(), cfg.Username, cfg.Password, *debug)
 
 	// Step 3: Discover services from FRITZ!Box
 	log.Println("Discovering TR-064 services from FRITZ!Box...")
-	registry, err := fritzbox.LoadFromFritz(ctx, cfg.BaseURL())
+	registry, err := LoadFromFritz(ctx, cfg.BaseURL())
 	if err != nil {
 		return fmt.Errorf("failed to load TR-064 services: %w", err)
 	}
@@ -148,11 +147,11 @@ func run() error {
 
 	// Step 5: Create documentation index
 	log.Println("Loading documentation index...")
-	docsIndex := fritzbox.NewIndex()
+	docsIndex := NewIndex()
 
 	// Step 6: Create and start MCP server
 	log.Printf("Starting MCP server v%s...\n", version)
-	mcpSrv := fritzbox.NewServer(serverName, version, tr064Client, registry, docsIndex)
+	mcpSrv := NewServer(serverName, version, tr064Client, registry, docsIndex)
 
 	log.Println("MCP server ready")
 	return server.ServeStdio(mcpSrv.GetMCPServer())
@@ -176,7 +175,7 @@ func runExecuteMode(ctx context.Context) error {
 	if !*executeQuiet {
 		log.Println("Loading configuration...")
 	}
-	cfg, err := fritzbox.Load()
+	cfg, err := Load()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
@@ -188,13 +187,13 @@ func runExecuteMode(ctx context.Context) error {
 	if !*executeQuiet {
 		log.Println("Creating TR-064 client...")
 	}
-	tr064Client := fritzbox.NewClient(cfg.BaseURL(), cfg.Username, cfg.Password, *debug)
+	tr064Client := NewClient(cfg.BaseURL(), cfg.Username, cfg.Password, *debug)
 
 	// Discover services
 	if !*executeQuiet {
 		log.Println("Discovering TR-064 services...")
 	}
-	registry, err := fritzbox.LoadFromFritz(ctx, cfg.BaseURL())
+	registry, err := LoadFromFritz(ctx, cfg.BaseURL())
 	if err != nil {
 		return fmt.Errorf("failed to load TR-064 services: %w", err)
 	}
@@ -245,7 +244,7 @@ func runExecuteMode(ctx context.Context) error {
 }
 
 // logDeviceInfo calls DeviceInfo:GetInfo to log device details at startup
-func logDeviceInfo(ctx context.Context, client *fritzbox.Client, registry *fritzbox.Registry) error {
+func logDeviceInfo(ctx context.Context, client *Client, registry *Registry) error {
 	// Find DeviceInfo service
 	var deviceInfoType string
 	for serviceType := range registry.Services {

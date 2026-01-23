@@ -1,4 +1,4 @@
-package fritzbox_test
+package main
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	fritzbox "github.com/jhinrichsen/fritzbox-mcp-server"
 )
 
 // TestFetchAllXML tests downloading all XML descriptors from a FRITZ!Box
@@ -14,7 +13,7 @@ import (
 // Set FRITZ_HOST in .env file or environment variable to run this test
 func TestFetchAllXML(t *testing.T) {
 	// Try to load config (which loads .env file)
-	_, _ = fritzbox.Load()
+	_, _ = Load()
 
 	// Check if FRITZ_HOST is set (from .env or environment)
 	host := os.Getenv("FRITZ_HOST")
@@ -39,7 +38,7 @@ func TestFetchAllXML(t *testing.T) {
 
 	// Fetch all XML files
 	ctx := context.Background()
-	if err := fritzbox.FetchAllXML(ctx, baseURL, xmlDir); err != nil {
+	if err := FetchAllXML(ctx, baseURL, xmlDir); err != nil {
 		t.Fatalf("FetchAllXML failed: %v", err)
 	}
 
@@ -74,7 +73,7 @@ func TestFetchAllXMLInvalidURL(t *testing.T) {
 	ctx := context.Background()
 	tempDir := t.TempDir()
 
-	err := fritzbox.FetchAllXML(ctx, "http://invalid-host-that-does-not-exist:49000", tempDir)
+	err := FetchAllXML(ctx, "http://invalid-host-that-does-not-exist:49000", tempDir)
 	if err == nil {
 		t.Error("Expected error for invalid host, got nil")
 	}

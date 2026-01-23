@@ -10,7 +10,7 @@ export SOURCE_DATE_EPOCH
 GO ?= CGO_ENABLED=0 go
 
 BINARY = fritz-mcp
-MAIN = ./cmd/$(BINARY)
+MAIN = .
 BUILD_DIR ?= build
 DIST_DIR ?= dist
 LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT) -buildid=
@@ -24,7 +24,7 @@ help: ## Show this help
 
 .PHONY: build
 build: ## Build the binary
-	$(GO) build $(MAIN)
+	$(GO) build -o $(BINARY) $(MAIN)
 
 .PHONY: run
 run: ## Run without building (use ARGS for arguments)
