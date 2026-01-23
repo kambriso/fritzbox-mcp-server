@@ -467,16 +467,6 @@ go test -v ./...
 
 ==== Integration Test: Device Info
 
-Test your FRITZ!Box connection:
-
-[source,bash]
-----
-go build -o test-device-info ./cmd/test-device-info
-./test-device-info
-----
-
-See link:cmd/test-device-info/README.md[cmd/test-device-info/README.md] for details.
-
 ==== XML Fetching
 
 Fetch service descriptors without authentication:
@@ -493,12 +483,10 @@ This downloads service descriptors to `xml/` directory for offline analysis.
 [source]
 ----
 .
-├── cmd/
-│   ├── fritz-mcp/          # Main MCP server binary
-│   └── test-device-info/   # Integration test tool
-├── xml/                    # Cached service descriptors
-├── dist/                   # Built binaries (created by make dist)
-├── config.go               # Configuration loading
+├── main.go                # Main MCP server binary
+├── xml/                   # Cached service descriptors
+├── dist/                  # Built binaries (created by make dist)
+├── config.go              # Configuration loading
 ├── tr064.go               # FRITZ!Box API client implementation
 ├── spec.go                # Service discovery and spec parsing
 ├── mcp.go                 # MCP server implementation

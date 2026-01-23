@@ -1,15 +1,18 @@
 variables:
   RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
 
-build:
+test:
   image: golang:1.25
-  before_script:
-    - apt-get update && apt-get install -y xz-utils zip jq
   script:
-    - make all
-    - make checksums
+    - make tidy
+    - make test
+
+release:
+  image: golang:1.25
+  only:
+    - tags
+  script:
+    - make dists
   artifacts:
     paths:
-      - dist/
-    reports:
-      cyclonedx: dist/sbom.json
+      - build/
