@@ -4,7 +4,7 @@ variables:
 build:
   image: golang:1.25
   before_script:
-    - apt-get update && apt-get install -y xz-utils zip
+    - apt-get update && apt-get install -y xz-utils zip jq
   script:
     - make all
     - make checksums
