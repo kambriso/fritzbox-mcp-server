@@ -67,7 +67,7 @@ func run() error {
 
 	// Set default XML directory if not specified
 	if *xmlDir == "" {
-		*xmlDir = GetCacheDir()
+		*xmlDir = getCacheDir()
 	}
 
 	ctx := context.Background()
@@ -80,10 +80,10 @@ func run() error {
 	// If --fetch-xml flag is set, only fetch XML and exit (no auth required)
 	if *fetchXMLOnly {
 		// Try to load minimal config (only FRITZ_HOST needed)
-		cfg, _ := Load()
+		cfg, _ := load()
 		var baseURL string
 		if cfg == nil {
-			// Load failed, try environment directly
+			// load failed, try environment directly
 			host := os.Getenv("FRITZ_HOST")
 			if host == "" {
 				return fmt.Errorf("FRITZ_HOST is required (set in .env or environment)")
@@ -94,11 +94,11 @@ func run() error {
 			}
 			baseURL = fmt.Sprintf("http://%s:%s", host, port)
 		} else {
-			baseURL = cfg.BaseURL()
+			baseURL = cfg.baseURL()
 		}
 
 		log.Printf("Fetching TR-064 XML files from %s to %s/", baseURL, *xmlDir)
-		if err := FetchAllXML(ctx, baseURL, *xmlDir); err != nil {
+		if err := fetchAllXML(ctx, baseURL, *xmlDir); err != nil {
 			return fmt.Errorf("failed to fetch XML: %w", err)
 		}
 		log.Println("✓ XML files fetched successfully")
@@ -119,21 +119,21 @@ func run() error {
 		return nil
 	}
 
-	// Step 1: Load full configuration (requires auth credentials)
+	// Step 1: load full configuration (requires auth credentials)
 	log.Println("Loading configuration...")
-	cfg, err := Load()
+	cfg, err := load()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	log.Printf("Configured for FRITZ!Box at %s", cfg.BaseURL())
+	log.Printf("Configured for FRITZ!Box at %s", cfg.baseURL())
 
 	// Step 2: Create TR-064 client
 	log.Println("Creating TR-064 client...")
-	tr064Client := NewClient(cfg.BaseURL(), cfg.Username, cfg.Password, *debug)
+	tr064Client := newClient(cfg.baseURL(), cfg.Username, cfg.Password, *debug)
 
 	// Step 3: Discover services from FRITZ!Box
 	log.Println("Discovering TR-064 services from FRITZ!Box...")
-	registry, err := LoadFromFritz(ctx, cfg.BaseURL())
+	registry, err := loadFromFritz(ctx, cfg.baseURL())
 	if err != nil {
 		return fmt.Errorf("failed to load TR-064 services: %w", err)
 	}
@@ -147,14 +147,14 @@ func run() error {
 
 	// Step 5: Create documentation index
 	log.Println("Loading documentation index...")
-	docsIndex := NewIndex()
+	docsIndex := newIndex()
 
 	// Step 6: Create and start MCP server
 	log.Printf("Starting MCP server v%s...\n", version)
-	mcpSrv := NewServer(serverName, version, tr064Client, registry, docsIndex)
+	mcpSrv := newServer(serverName, version, tr064Client, registry, docsIndex)
 
 	log.Println("MCP server ready")
-	return server.ServeStdio(mcpSrv.GetMCPServer())
+	return server.ServeStdio(mcpSrv.getMCPServer())
 }
 
 // runExecuteMode executes a single action in CLI mode and exits
@@ -171,29 +171,29 @@ func runExecuteMode(ctx context.Context) error {
 		log.Println("CLI execution mode")
 	}
 
-	// Load configuration
+	// load configuration
 	if !*executeQuiet {
 		log.Println("Loading configuration...")
 	}
-	cfg, err := Load()
+	cfg, err := load()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 	if !*executeQuiet {
-		log.Printf("Configured for FRITZ!Box at %s", cfg.BaseURL())
+		log.Printf("Configured for FRITZ!Box at %s", cfg.baseURL())
 	}
 
 	// Create TR-064 client
 	if !*executeQuiet {
 		log.Println("Creating TR-064 client...")
 	}
-	tr064Client := NewClient(cfg.BaseURL(), cfg.Username, cfg.Password, *debug)
+	tr064Client := newClient(cfg.baseURL(), cfg.Username, cfg.Password, *debug)
 
 	// Discover services
 	if !*executeQuiet {
 		log.Println("Discovering TR-064 services...")
 	}
-	registry, err := LoadFromFritz(ctx, cfg.BaseURL())
+	registry, err := loadFromFritz(ctx, cfg.baseURL())
 	if err != nil {
 		return fmt.Errorf("failed to load TR-064 services: %w", err)
 	}
@@ -207,7 +207,7 @@ func runExecuteMode(ctx context.Context) error {
 		return fmt.Errorf("service not found: %s", *serviceType)
 	}
 
-	actionSpec, err := registry.GetAction(*serviceType, *actionName)
+	actionSpec, err := registry.getAction(*serviceType, *actionName)
 	if err != nil {
 		return fmt.Errorf("action not found: %s", err)
 	}
@@ -228,7 +228,7 @@ func runExecuteMode(ctx context.Context) error {
 	if !*executeQuiet {
 		log.Printf("Executing %s:%s...", *serviceType, *actionName)
 	}
-	result, err := tr064Client.Call(ctx, serviceSpec, actionSpec, inputArgs)
+	result, err := tr064Client.call(ctx, serviceSpec, actionSpec, inputArgs)
 	if err != nil {
 		return fmt.Errorf("action execution failed: %w", err)
 	}
@@ -244,7 +244,7 @@ func runExecuteMode(ctx context.Context) error {
 }
 
 // logDeviceInfo calls DeviceInfo:GetInfo to log device details at startup
-func logDeviceInfo(ctx context.Context, client *Client, registry *Registry) error {
+func logDeviceInfo(ctx context.Context, client *client, registry *registry) error {
 	// Find DeviceInfo service
 	var deviceInfoType string
 	for serviceType := range registry.Services {
@@ -259,15 +259,15 @@ func logDeviceInfo(ctx context.Context, client *Client, registry *Registry) erro
 	}
 
 	// Get action spec
-	actionSpec, err := registry.GetAction(deviceInfoType, "GetInfo")
+	actionSpec, err := registry.getAction(deviceInfoType, "GetInfo")
 	if err != nil {
 		return err
 	}
 
 	serviceSpec := registry.Services[deviceInfoType]
 
-	// Call action
-	result, err := client.Call(ctx, serviceSpec, actionSpec, map[string]string{})
+	// call action
+	result, err := client.call(ctx, serviceSpec, actionSpec, map[string]string{})
 	if err != nil {
 		return err
 	}

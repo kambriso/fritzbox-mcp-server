@@ -15,9 +15,9 @@ import (
 	"time"
 )
 
-// Client is a TR-064 SOAP client with authentication support
-type Client struct {
-	BaseURL    string
+// client is a TR-064 SOAP client with authentication support
+type client struct {
+	baseURL    string
 	Username   string
 	Password   string
 	httpClient *http.Client
@@ -31,10 +31,10 @@ type Client struct {
 	algorithm string
 }
 
-// NewClient creates a new TR-064 client
-func NewClient(baseURL, username, password string, debug bool) *Client {
-	return &Client{
-		BaseURL:  baseURL,
+// newClient creates a new TR-064 client
+func newClient(baseURL, username, password string, debug bool) *client {
+	return &client{
+		baseURL:  baseURL,
 		Username: username,
 		Password: password,
 		Debug:    debug,
@@ -45,19 +45,19 @@ func NewClient(baseURL, username, password string, debug bool) *Client {
 }
 
 // debugf logs a debug message if debug mode is enabled
-func (c *Client) debugf(format string, args ...interface{}) {
+func (c *client) debugf(format string, args ...interface{}) {
 	if c.Debug {
 		log.Printf("DEBUG: "+format, args...)
 	}
 }
 
-// Call executes a TR-064 action with the given arguments
-func (c *Client) Call(ctx context.Context, svc *ServiceSpec, action *ActionSpec, in map[string]string) (map[string]string, error) {
+// call executes a TR-064 action with the given arguments
+func (c *client) call(ctx context.Context, svc *serviceSpec, action *actionSpec, in map[string]string) (map[string]string, error) {
 	return c.callWithRetry(ctx, svc, action, in, false)
 }
 
 // callWithRetry is the internal implementation that tracks auth retries
-func (c *Client) callWithRetry(ctx context.Context, svc *ServiceSpec, action *ActionSpec, in map[string]string, isRetry bool) (map[string]string, error) {
+func (c *client) callWithRetry(ctx context.Context, svc *serviceSpec, action *actionSpec, in map[string]string, isRetry bool) (map[string]string, error) {
 	// Check context deadline
 	if deadline, ok := ctx.Deadline(); ok {
 		c.debugf("Context deadline: %v (in %v)", deadline, time.Until(deadline))
@@ -69,7 +69,7 @@ func (c *Client) callWithRetry(ctx context.Context, svc *ServiceSpec, action *Ac
 	soapReq := c.buildSOAPRequest(action, in)
 
 	// Prepare HTTP request
-	url := c.BaseURL + svc.ControlURL
+	url := c.baseURL + svc.ControlURL
 	c.debugf("Calling %s#%s at %s", svc.ServiceType, action.Name, url)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader([]byte(soapReq)))
 	if err != nil {
@@ -134,7 +134,7 @@ func (c *Client) callWithRetry(ctx context.Context, svc *ServiceSpec, action *Ac
 }
 
 // buildSOAPRequest constructs a SOAP XML request
-func (c *Client) buildSOAPRequest(action *ActionSpec, in map[string]string) string {
+func (c *client) buildSOAPRequest(action *actionSpec, in map[string]string) string {
 	var buf strings.Builder
 
 	buf.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
@@ -162,7 +162,7 @@ func (c *Client) buildSOAPRequest(action *ActionSpec, in map[string]string) stri
 }
 
 // parseSOAPResponse extracts output arguments from SOAP XML response
-func (c *Client) parseSOAPResponse(action *ActionSpec, body []byte) (map[string]string, error) {
+func (c *client) parseSOAPResponse(action *actionSpec, body []byte) (map[string]string, error) {
 	// Simple XML parsing - look for response element
 	responseName := action.Name + "Response"
 
@@ -223,7 +223,7 @@ func (c *Client) parseSOAPResponse(action *ActionSpec, body []byte) (map[string]
 }
 
 // handleAuthChallenge processes the WWW-Authenticate challenge from FRITZ!Box
-func (c *Client) handleAuthChallenge(resp *http.Response) error {
+func (c *client) handleAuthChallenge(resp *http.Response) error {
 	authHeader := resp.Header.Get("WWW-Authenticate")
 	if authHeader == "" {
 		return fmt.Errorf("no WWW-Authenticate header")
@@ -267,7 +267,7 @@ func (c *Client) handleAuthChallenge(resp *http.Response) error {
 }
 
 // buildAuthHeader constructs the Authorization header for Digest auth
-func (c *Client) buildAuthHeader(method, uri string) string {
+func (c *client) buildAuthHeader(method, uri string) string {
 	// Generate client nonce
 	cnonce := generateCNonce()
 	nc := "00000001"

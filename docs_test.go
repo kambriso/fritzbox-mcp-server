@@ -120,16 +120,16 @@ func TestHumanizeCamelCase(t *testing.T) {
 }
 
 func TestDocsIndex(t *testing.T) {
-	idx := NewIndex()
+	idx := newIndex()
 
 	// Test basic lookup
-	doc := idx.Lookup("urn:dslforum-org:service:DeviceInfo:1", "GetInfo")
+	doc := idx.lookup("urn:dslforum-org:service:DeviceInfo:1", "GetInfo")
 	if !strings.Contains(doc, "device") {
 		t.Errorf("Expected documentation to contain 'device', got: %s", doc)
 	}
 
 	// Test lookup with args
-	detailedDoc := idx.LookupWithArgs(
+	detailedDoc := idx.lookupWithArgs(
 		"urn:dslforum-org:service:Hosts:1",
 		"GetGenericHostEntry",
 		[]string{"NewIndex"},

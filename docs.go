@@ -5,25 +5,25 @@ import (
 	"strings"
 )
 
-// Index provides documentation lookup for TR-064 services and actions
-type Index struct {
+// index provides documentation lookup for TR-064 services and actions
+type index struct {
 	// In the future, this could load from parsed PDFs
 	// For now, we provide basic stub documentation
 }
 
-// NewIndex creates a new documentation index
-func NewIndex() *Index {
-	return &Index{}
+// newIndex creates a new documentation index
+func newIndex() *index {
+	return &index{}
 }
 
-// Lookup returns documentation for a given service and action
-func (idx *Index) Lookup(serviceType, actionName string) string {
+// lookup returns documentation for a given service and action
+func (idx *index) lookup(serviceType, actionName string) string {
 	serviceName := extractServiceName(serviceType)
 	return generateDocumentation(serviceName, actionName)
 }
 
-// LookupWithArgs returns documentation including argument details
-func (idx *Index) LookupWithArgs(serviceType, actionName string, inArgs, outArgs []string) string {
+// lookupWithArgs returns documentation including argument details
+func (idx *index) lookupWithArgs(serviceType, actionName string, inArgs, outArgs []string) string {
 	serviceName := extractServiceName(serviceType)
 	return generateDetailedDocumentation(serviceName, actionName, inArgs, outArgs)
 }

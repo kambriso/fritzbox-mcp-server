@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// Config holds the FRITZ!Box connection configuration
-type Config struct {
+// config holds the FRITZ!Box connection configuration
+type config struct {
 	Host     string
 	Port     int
 	Username string
@@ -30,9 +30,9 @@ func getConfigDir() string {
 	return ""
 }
 
-// GetCacheDir returns the cache directory path for storing XML descriptors
+// getCacheDir returns the cache directory path for storing XML descriptors
 // This is exported so it can be used by cmd/fritz-mcp
-func GetCacheDir() string {
+func getCacheDir() string {
 	// Check XDG_CACHE_HOME first (Linux/BSD)
 	if cacheHome := os.Getenv("XDG_CACHE_HOME"); cacheHome != "" {
 		return filepath.Join(cacheHome, "fritzbox-mcp-server")
@@ -68,12 +68,12 @@ func loadEnvFile(path string) error {
 	return nil
 }
 
-// Load reads configuration from .env file and environment variables
+// load reads configuration from .env file and environment variables
 // Returns error if required fields are missing
 // Looks for .env in:
 // 1. Current directory (.env)
 // 2. Global config directory (~/.config/fritzbox-mcp-server/.env)
-func Load() (*Config, error) {
+func load() (*config, error) {
 	// Try loading from current directory first (for development/testing)
 	if err := loadEnvFile(".env"); err != nil {
 		// If not found in current dir, try global config
@@ -83,7 +83,7 @@ func Load() (*Config, error) {
 		}
 	}
 
-	cfg := &Config{
+	cfg := &config{
 		Host:     os.Getenv("FRITZ_HOST"),
 		Username: os.Getenv("FRITZ_USERNAME"),
 		Password: os.Getenv("FRITZ_PASSWORD"),
@@ -125,8 +125,8 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
-// BaseURL returns the base URL for TR-064 requests
-func (c *Config) BaseURL() string {
+// baseURL returns the base URL for TR-064 requests
+func (c *config) baseURL() string {
 	scheme := "http"
 	if c.TLS {
 		scheme = "https"

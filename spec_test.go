@@ -13,7 +13,7 @@ import (
 // Set FRITZ_HOST in .env file or environment variable to run this test
 func TestFetchAllXML(t *testing.T) {
 	// Try to load config (which loads .env file)
-	_, _ = Load()
+	_, _ = load()
 
 	// Check if FRITZ_HOST is set (from .env or environment)
 	host := os.Getenv("FRITZ_HOST")
@@ -38,8 +38,8 @@ func TestFetchAllXML(t *testing.T) {
 
 	// Fetch all XML files
 	ctx := context.Background()
-	if err := FetchAllXML(ctx, baseURL, xmlDir); err != nil {
-		t.Fatalf("FetchAllXML failed: %v", err)
+	if err := fetchAllXML(ctx, baseURL, xmlDir); err != nil {
+		t.Fatalf("fetchAllXML failed: %v", err)
 	}
 
 	// Verify tr64desc.xml exists
@@ -73,7 +73,7 @@ func TestFetchAllXMLInvalidURL(t *testing.T) {
 	ctx := context.Background()
 	tempDir := t.TempDir()
 
-	err := FetchAllXML(ctx, "http://invalid-host-that-does-not-exist:49000", tempDir)
+	err := fetchAllXML(ctx, "http://invalid-host-that-does-not-exist:49000", tempDir)
 	if err == nil {
 		t.Error("Expected error for invalid host, got nil")
 	}

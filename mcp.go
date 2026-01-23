@@ -10,17 +10,17 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// Server wraps the MCP server with TR-064 integration
-type Server struct {
+// server wraps the MCP server with TR-064 integration
+type mcpServer struct {
 	mcpServer *server.MCPServer
-	tr064     *Client
-	registry  *Registry
-	docsIndex *Index
+	tr064     *client
+	registry  *registry
+	docsIndex *index
 }
 
-// NewServer creates a new MCP server with TR-064 integration
-func NewServer(name, version string, tr064Client *Client, registry *Registry, docsIndex *Index) *Server {
-	s := &Server{
+// newServer creates a new MCP server with TR-064 integration
+func newServer(name, version string, tr064Client *client, registry *registry, docsIndex *index) *mcpServer {
+	s := &mcpServer{
 		tr064:     tr064Client,
 		registry:  registry,
 		docsIndex: docsIndex,
@@ -41,13 +41,13 @@ func NewServer(name, version string, tr064Client *Client, registry *Registry, do
 	return s
 }
 
-// GetMCPServer returns the underlying MCP server instance
-func (s *Server) GetMCPServer() *server.MCPServer {
+// getMCPServer returns the underlying MCP server instance
+func (s *mcpServer) getMCPServer() *server.MCPServer {
 	return s.mcpServer
 }
 
 // registerExecutionTools registers the generic action execution tool
-func (s *Server) registerExecutionTools() {
+func (s *mcpServer) registerExecutionTools() {
 	// call_action - generic tool to execute any TR-064 action
 	s.mcpServer.AddTool(mcp.Tool{
 		Name:        "call_action",
@@ -77,7 +77,7 @@ func (s *Server) registerExecutionTools() {
 }
 
 // registerIntrospectionTools registers tools for discovering FRITZ!Box capabilities
-func (s *Server) registerIntrospectionTools() {
+func (s *mcpServer) registerIntrospectionTools() {
 	// list_services
 	s.mcpServer.AddTool(mcp.Tool{
 		Name:        "list_services",
@@ -127,7 +127,7 @@ func (s *Server) registerIntrospectionTools() {
 
 // registerAllServiceTools auto-registers tools for all services
 // Registers read-only GET actions with no input parameters as convenience tools
-func (s *Server) registerAllServiceTools() {
+func (s *mcpServer) registerAllServiceTools() {
 	for serviceType, serviceSpec := range s.registry.Services {
 		// Extract service name from URN (e.g., "DeviceInfo" from "urn:dslforum-org:service:DeviceInfo:1")
 		serviceName := extractServiceName(serviceType)
@@ -142,7 +142,7 @@ func (s *Server) registerAllServiceTools() {
 			toolName := strings.ToLower(serviceName + "_" + actionName)
 
 			// Get documentation
-			doc := s.docsIndex.Lookup(serviceType, actionName)
+			doc := s.docsIndex.lookup(serviceType, actionName)
 			if doc == "" {
 				doc = fmt.Sprintf("Execute %s action on %s service", actionName, serviceName)
 			}
@@ -186,19 +186,19 @@ func isReadOnlyAction(actionName string) bool {
 }
 
 // createActionHandler creates a handler for a no-argument action
-func (s *Server) createActionHandler(serviceType, actionName string) func(map[string]interface{}) (*mcp.CallToolResult, error) {
+func (s *mcpServer) createActionHandler(serviceType, actionName string) func(map[string]interface{}) (*mcp.CallToolResult, error) {
 	return func(args map[string]interface{}) (*mcp.CallToolResult, error) {
 		// Get service and action specs
-		actionSpec, err := s.registry.GetAction(serviceType, actionName)
+		actionSpec, err := s.registry.getAction(serviceType, actionName)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 
 		serviceSpec := s.registry.Services[serviceType]
 
-		// Call FRITZ!Box API
+		// call FRITZ!Box API
 		ctx := context.Background()
-		result, err := s.tr064.Call(ctx, serviceSpec, actionSpec, map[string]string{})
+		result, err := s.tr064.call(ctx, serviceSpec, actionSpec, map[string]string{})
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("API call failed: %v", err)), nil
 		}
@@ -214,7 +214,7 @@ func (s *Server) createActionHandler(serviceType, actionName string) func(map[st
 }
 
 // handleListServices implements list_services
-func (s *Server) handleListServices(args map[string]interface{}) (*mcp.CallToolResult, error) {
+func (s *mcpServer) handleListServices(args map[string]interface{}) (*mcp.CallToolResult, error) {
 	services := []map[string]string{}
 
 	for serviceType, serviceSpec := range s.registry.Services {
@@ -233,7 +233,7 @@ func (s *Server) handleListServices(args map[string]interface{}) (*mcp.CallToolR
 }
 
 // handleListActions implements list_actions
-func (s *Server) handleListActions(args map[string]interface{}) (*mcp.CallToolResult, error) {
+func (s *mcpServer) handleListActions(args map[string]interface{}) (*mcp.CallToolResult, error) {
 	serviceType, ok := args["service_type"].(string)
 	if !ok {
 		return mcp.NewToolResultError("service_type is required"), nil
@@ -273,7 +273,7 @@ func (s *Server) handleListActions(args map[string]interface{}) (*mcp.CallToolRe
 }
 
 // handleDescribeAction implements describe_action
-func (s *Server) handleDescribeAction(args map[string]interface{}) (*mcp.CallToolResult, error) {
+func (s *mcpServer) handleDescribeAction(args map[string]interface{}) (*mcp.CallToolResult, error) {
 	serviceType, ok := args["service_type"].(string)
 	if !ok {
 		return mcp.NewToolResultError("service_type is required"), nil
@@ -284,7 +284,7 @@ func (s *Server) handleDescribeAction(args map[string]interface{}) (*mcp.CallToo
 		return mcp.NewToolResultError("action is required"), nil
 	}
 
-	actionSpec, err := s.registry.GetAction(serviceType, actionName)
+	actionSpec, err := s.registry.getAction(serviceType, actionName)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -316,7 +316,7 @@ func (s *Server) handleDescribeAction(args map[string]interface{}) (*mcp.CallToo
 	}
 
 	// Get detailed documentation with argument context
-	doc := s.docsIndex.LookupWithArgs(serviceType, actionName, inArgNames, outArgNames)
+	doc := s.docsIndex.lookupWithArgs(serviceType, actionName, inArgNames, outArgNames)
 
 	result := map[string]interface{}{
 		"service_type": serviceType,
@@ -335,7 +335,7 @@ func (s *Server) handleDescribeAction(args map[string]interface{}) (*mcp.CallToo
 }
 
 // handleCallAction implements the generic call_action tool
-func (s *Server) handleCallAction(args map[string]interface{}) (*mcp.CallToolResult, error) {
+func (s *mcpServer) handleCallAction(args map[string]interface{}) (*mcp.CallToolResult, error) {
 	serviceType, ok := args["service_type"].(string)
 	if !ok {
 		return mcp.NewToolResultError("service_type is required"), nil
@@ -352,7 +352,7 @@ func (s *Server) handleCallAction(args map[string]interface{}) (*mcp.CallToolRes
 		return mcp.NewToolResultError(fmt.Sprintf("Service not found: %s", serviceType)), nil
 	}
 
-	actionSpec, err := s.registry.GetAction(serviceType, actionName)
+	actionSpec, err := s.registry.getAction(serviceType, actionName)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -369,9 +369,9 @@ func (s *Server) handleCallAction(args map[string]interface{}) (*mcp.CallToolRes
 		}
 	}
 
-	// Call FRITZ!Box API
+	// call FRITZ!Box API
 	ctx := context.Background()
-	result, err := s.tr064.Call(ctx, serviceSpec, actionSpec, inputArgs)
+	result, err := s.tr064.call(ctx, serviceSpec, actionSpec, inputArgs)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("API call failed: %v", err)), nil
 	}

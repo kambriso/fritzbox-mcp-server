@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-// ArgSpec represents a TR-064 action argument
-type ArgSpec struct {
+// argSpec represents a TR-064 action argument
+type argSpec struct {
 	Name            string   // e.g. NewModelName
 	Direction       string   // "in" or "out"
 	RelatedStateVar string   // reference to state variable
@@ -20,25 +20,25 @@ type ArgSpec struct {
 	DataType        string   // string, ui4, boolean, etc.
 }
 
-// ActionSpec represents a TR-064 action
-type ActionSpec struct {
+// actionSpec represents a TR-064 action
+type actionSpec struct {
 	ServiceType string    // urn:dslforum-org:service:DeviceInfo:1
 	Name        string    // GetInfo
-	In          []ArgSpec // input arguments in order
-	Out         []ArgSpec // output arguments in order
+	In          []argSpec // input arguments in order
+	Out         []argSpec // output arguments in order
 }
 
-// ServiceSpec represents a TR-064 service
-type ServiceSpec struct {
+// serviceSpec represents a TR-064 service
+type serviceSpec struct {
 	ServiceType string                 // urn:dslforum-org:service:DeviceInfo:1
 	ControlURL  string                 // /upnp/control/deviceinfo
 	SCPDURL     string                 // /deviceinfoSCPD.xml
-	Actions     map[string]*ActionSpec // action name -> spec
+	Actions     map[string]*actionSpec // action name -> spec
 }
 
-// Registry holds all discovered TR-064 services and actions
-type Registry struct {
-	Services map[string]*ServiceSpec // service type -> spec
+// registry holds all discovered TR-064 services and actions
+type registry struct {
+	Services map[string]*serviceSpec // service type -> spec
 }
 
 // XML structures for parsing tr64desc.xml
@@ -111,9 +111,9 @@ type allowedValues struct {
 	Values []string `xml:"allowedValue"`
 }
 
-// FetchAllXML downloads all XML descriptors from FRITZ!Box (no auth required)
+// fetchAllXML downloads all XML descriptors from FRITZ!Box (no auth required)
 // and saves them to the specified directory
-func FetchAllXML(ctx context.Context, baseURL, outputDir string) error {
+func fetchAllXML(ctx context.Context, baseURL, outputDir string) error {
 	// Create output directory
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
@@ -200,10 +200,10 @@ func sanitizeFilename(path string) string {
 	return name
 }
 
-// LoadFromFritz discovers all TR-064 services from the FRITZ!Box
-func LoadFromFritz(ctx context.Context, baseURL string) (*Registry, error) {
-	registry := &Registry{
-		Services: make(map[string]*ServiceSpec),
+// loadFromFritz discovers all TR-064 services from the FRITZ!Box
+func loadFromFritz(ctx context.Context, baseURL string) (*registry, error) {
+	registry := &registry{
+		Services: make(map[string]*serviceSpec),
 	}
 
 	// Step 1: Fetch and parse tr64desc.xml
@@ -238,11 +238,11 @@ func LoadFromFritz(ctx context.Context, baseURL string) (*Registry, error) {
 
 	// Step 3: For each service, fetch and parse its SCPD
 	for _, svc := range allServices {
-		serviceSpec := &ServiceSpec{
+		serviceSpec := &serviceSpec{
 			ServiceType: svc.ServiceType,
 			ControlURL:  svc.ControlURL,
 			SCPDURL:     svc.SCPDURL,
-			Actions:     make(map[string]*ActionSpec),
+			Actions:     make(map[string]*actionSpec),
 		}
 
 		// Fetch SCPD
@@ -280,7 +280,7 @@ func collectServicesRecursive(device *tr64Device) []service {
 }
 
 // loadSCPD fetches and parses a service's SCPD XML
-func loadSCPD(ctx context.Context, scpdURL string, serviceSpec *ServiceSpec) error {
+func loadSCPD(ctx context.Context, scpdURL string, serviceSpec *serviceSpec) error {
 	req, err := http.NewRequestWithContext(ctx, "GET", scpdURL, nil)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
@@ -315,16 +315,16 @@ func loadSCPD(ctx context.Context, scpdURL string, serviceSpec *ServiceSpec) err
 
 	// Process each action
 	for _, action := range scpd.ActionList.Actions {
-		actionSpec := &ActionSpec{
+		actionSpec := &actionSpec{
 			ServiceType: serviceSpec.ServiceType,
 			Name:        action.Name,
-			In:          []ArgSpec{},
-			Out:         []ArgSpec{},
+			In:          []argSpec{},
+			Out:         []argSpec{},
 		}
 
 		// Process arguments in order (important!)
 		for _, arg := range action.ArgumentList.Arguments {
-			argSpec := ArgSpec{
+			argSpec := argSpec{
 				Name:            arg.Name,
 				Direction:       arg.Direction,
 				RelatedStateVar: arg.RelatedStateVariable,
@@ -350,8 +350,8 @@ func loadSCPD(ctx context.Context, scpdURL string, serviceSpec *ServiceSpec) err
 	return nil
 }
 
-// GetAction looks up an action by service type and action name
-func (r *Registry) GetAction(serviceType, actionName string) (*ActionSpec, error) {
+// getAction looks up an action by service type and action name
+func (r *registry) getAction(serviceType, actionName string) (*actionSpec, error) {
 	svc, ok := r.Services[serviceType]
 	if !ok {
 		return nil, fmt.Errorf("service not found: %s", serviceType)

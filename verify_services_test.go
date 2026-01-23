@@ -8,7 +8,7 @@ import (
 
 // TestVerifyAllServicesDiscovered ensures we capture all services from tr64desc.xml
 func TestVerifyAllServicesDiscovered(t *testing.T) {
-	// Load tr64desc.xml from testdata
+	// load tr64desc.xml from testdata
 	data, err := os.ReadFile("testdata/xml/tr64desc.xml")
 	if err != nil {
 		t.Fatalf("Failed to read tr64desc.xml: %v", err)
