@@ -101,6 +101,17 @@ $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm: $(GO_SOURCES)
 $(DIST_DIR):
 	@mkdir -p $@
 
+DIST_BINARIES = \
+	$(BUILD_DIR)/linux/amd64/$(BINARY) \
+	$(BUILD_DIR)/linux/arm64/$(BINARY) \
+	$(BUILD_DIR)/linux/386/$(BINARY) \
+	$(BUILD_DIR)/linux/arm/$(BINARY) \
+	$(BUILD_DIR)/darwin/amd64/$(BINARY) \
+	$(BUILD_DIR)/darwin/arm64/$(BINARY) \
+	$(BUILD_DIR)/windows/amd64/$(BINARY).exe \
+	$(BUILD_DIR)/windows/arm64/$(BINARY).exe \
+	$(BUILD_DIR)/wasi/wasm/$(BINARY).wasm
+
 DIST_ARCHIVES = \
 	$(DIST_DIR)/$(BINARY)-linux-amd64.tar.xz \
 	$(DIST_DIR)/$(BINARY)-linux-arm64.tar.xz \
@@ -138,6 +149,9 @@ $(DIST_DIR)/$(BINARY)-windows-arm64.zip: $(BUILD_DIR)/windows/arm64/$(BINARY).ex
 
 $(DIST_DIR)/$(BINARY)-wasi.tar.xz: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm | $(DIST_DIR)
 	tar -cJf $@ -C $(BUILD_DIR)/wasi/wasm $(BINARY).wasm
+
+.PHONY: dists
+dists: $(DIST_BINARIES) ## Build all platform binaries
 
 .PHONY: archives
 archives: $(DIST_ARCHIVES) ## Create release archives
