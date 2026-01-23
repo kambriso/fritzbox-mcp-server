@@ -153,6 +153,10 @@ $(DIST_DIR)/$(BINARY)-wasi.tar.xz: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm | $(DIS
 .PHONY: dists
 dists: $(DIST_BINARIES) ## Build all platform binaries
 
+.PHONY: dists-container
+dists-container: ## Build all platform binaries in golang:1.25 container for reproducibility
+	podman run --rm -v .:/work:z -w /work golang:1.25 make dists
+
 .PHONY: archives
 archives: $(DIST_ARCHIVES) ## Create release archives
 

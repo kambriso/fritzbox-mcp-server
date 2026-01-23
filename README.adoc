@@ -456,6 +456,62 @@ GOOS=darwin GOARCH=arm64 make dist
 GOOS=windows GOARCH=amd64 make dist
 ----
 
+==== Reproducible Builds
+
+All release binaries are reproducible: building from the same source code produces byte-for-byte identical binaries. This allows independent verification that published binaries match the source code.
+
+===== Why Reproducibility Matters
+
+Reproducible builds enable:
+
+* Independent verification of release artifacts
+* Detection of supply chain tampering
+* Confidence that binaries match reviewed source code
+* Foundation for SLSA attestations
+
+===== Build Flags for Reproducibility
+
+The Makefile uses these flags to ensure deterministic builds:
+
+[source,bash]
+----
+-trimpath                    # Remove absolute paths
+-buildvcs=false              # Disable VCS info embedding
+-buildid=                    # Clear build ID
+SOURCE_DATE_EPOCH=$(git)     # Use commit timestamp
+----
+
+===== Toolchain Requirements
+
+Go produces reproducible binaries when using the same toolchain distribution. However, different Go distributions (upstream vs Fedora/Debian packages) may produce different binaries due to distribution-specific patches or build experiments.
+
+Known differences:
+
+* Fedora Go 1.25.6 includes `GOEXPERIMENT=nodwarf5` compiled into the toolchain
+* Upstream Go 1.25.6 (from go.dev or golang:1.25 container) has no experiments
+* These differences are embedded in the `.go.buildinfo` section
+
+===== Verifying Local Builds
+
+To reproduce GitLab CI builds locally, use the same golang:1.25 container:
+
+[source,bash]
+----
+# Build all platforms in container (matches CI environment)
+make dists-container
+
+# Compare with published release checksums
+sha256sum -c SHA256SUMS
+----
+
+The gitlab:1.25 Docker image matches the upstream Go distribution, ensuring reproducibility across environments.
+
+===== CI/CD Reproducibility
+
+Both GitLab CI and GitHub Actions use the golang:1.25 Docker image to ensure consistent toolchain across all builds. Local builds using distribution-provided Go packages (Fedora, Ubuntu, etc.) may produce different binaries due to distro-specific patches.
+
+For byte-for-byte reproducible local builds, use `make dists-container` which builds in the golang:1.25 container.
+
 === Testing
 
 ==== Unit Tests
