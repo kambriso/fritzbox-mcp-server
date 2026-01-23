@@ -1,0 +1,13 @@
+variables:
+  RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+
+build:
+  image: golang:1.25
+  script:
+    - make all
+    - make checksums
+  artifacts:
+    paths:
+      - dist/
+    reports:
+      cyclonedx: dist/sbom.json
