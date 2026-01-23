@@ -10,7 +10,7 @@ When invoked without flags, runs as an MCP protocol server via stdin/stdout.
 
 === CLI EXECUTION MODE ===
 
-Execute a single TR-064 action from command line. Perfect for at/cron scheduling.
+Execute a single action from command line. Perfect for at/cron scheduling.
 
 Usage:
   $ fritz-mcp --execute \

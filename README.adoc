@@ -343,8 +343,8 @@ After the first message in a session, Claude's prompt caching reduces the token 
 
 This server is runtime-driven and model-agnostic:
 
-* No hardcoded TR-064 service structs
-* Discovers capabilities dynamically from your FRITZ!Box's XML descriptors
+* No hardcoded service structures
+* Discovers capabilities dynamically from your FRITZ!Box's service descriptors
 * Works with firmware updates automatically
 * Supports all FRITZ!Box models (tested with 7490, 7590)
 
@@ -392,7 +392,7 @@ Required variables:
 [source,bash]
 ----
 FRITZ_HOST=fritz.box          # FRITZ!Box hostname or IP
-FRITZ_PORT=49000              # TR-064 port (default: 49000)
+FRITZ_PORT=49000              # Service port (default: 49000)
 FRITZ_USERNAME=your-username  # FRITZ!Box username
 FRITZ_PASSWORD=your-password  # FRITZ!Box password
 ----
@@ -479,7 +479,7 @@ See link:cmd/test-device-info/README.md[cmd/test-device-info/README.md] for deta
 
 ==== XML Fetching
 
-Fetch TR-064 XML descriptors without authentication:
+Fetch service descriptors without authentication:
 
 [source,bash]
 ----
@@ -496,10 +496,10 @@ This downloads service descriptors to `xml/` directory for offline analysis.
 ├── cmd/
 │   ├── fritz-mcp/          # Main MCP server binary
 │   └── test-device-info/   # Integration test tool
-├── xml/                    # Cached TR-064 XML descriptors
+├── xml/                    # Cached service descriptors
 ├── dist/                   # Built binaries (created by make dist)
 ├── config.go               # Configuration loading
-├── tr064.go               # TR-064 client implementation
+├── tr064.go               # FRITZ!Box API client implementation
 ├── spec.go                # Service discovery and spec parsing
 ├── mcp.go                 # MCP server implementation
 ├── docs.go                # Documentation index
@@ -567,14 +567,14 @@ Container Images::
 
 === Runtime Discovery Architecture
 
-This server is designed to be runtime-driven and model-agnostic. It does not contain any hardcoded TR-064 service structures.
+This server is designed to be runtime-driven and model-agnostic. It does not contain any hardcoded service structures.
 
 ==== Design Principles
 
-* No static, model-specific Go structs for TR-064 services
+* No static, model-specific Go structs for services
 * No dependency on any cloud for auth, logic, or docs
-* Discovery of TR-064 services/actions from runtime XML
-* Typed MCP tools generated at runtime (from XML + PDFs)
+* Discovery of services and actions from runtime service descriptors
+* Typed MCP tools generated at runtime from service specifications
 * Same MCP binary works with new firmware and models automatically
 
 ==== Key Components
@@ -593,7 +593,7 @@ Required keys:
 - FRITZ_TLS=false (optional, for 49443 later)
 ----
 
-===== TR-064 Core Client (internal/tr064)
+===== API Client (internal/tr064)
 
 Minimal types:
 
@@ -603,14 +603,14 @@ Minimal types:
 ** auth state (nonce, realm, secret, etc.)
 * Call(ctx, svc spec.ServiceSpec, act spec.ActionSpec, in map[string]string) (map[string]string, error)
 
-All TR-064 argument values represented as map[string]string.
+All argument values represented as map[string]string.
 
 Authentication:
 
-* Implements AVM TR-064 auth (SOAP/ClientAuth variant)
+* Implements AVM authentication (SOAP/ClientAuth variant)
 * First request: without auth → expect challenge response from FRITZ!Box
 * Parse nonce/realm/etc. from response
-* Compute MD5-based token (per AVM TR-064 First Steps doc)
+* Compute MD5-based token
 * Include proper SOAP auth header in subsequent calls
 * Cache auth; on auth failure, retry once with fresh challenge
 
@@ -625,9 +625,9 @@ SOAP and XML handling:
 ** Parse `<u:ActionNameResponse>`
 ** Each child element becomes an entry in map[string]string: key = XML element name (e.g. NewModelName), value = inner text
 
-No TR-064 field names are hardcoded outside this package.
+No field names are hardcoded outside this package.
 
-===== TR-064 Spec Registry (internal/spec)
+===== Service Spec Registry (internal/spec)
 
 Dynamic spec representation:
 
@@ -714,7 +714,7 @@ JSON schemas:
 Input JSON (for a given tool):
 
 * Object with properties derived from ActionSpec.In
-* Each property name is the TR-064 arg name (e.g. NewMACAddress)
+* Each property name is the argument name (e.g. NewMACAddress)
 * Type mapping from DataType:
 ** string → JSON string
 ** boolean → JSON boolean
@@ -757,7 +757,7 @@ Input: service_type, action
 Output: service_type, action, doc, in_args, out_args
 
 call_action::
-Execute any TR-064 action on the FRITZ!Box. Use list_services and describe_action to discover available actions and their parameters.
+Execute any action on the FRITZ!Box. Use list_services and describe_action to discover available actions and their parameters.
 
 ==== Runtime flow
 
@@ -779,16 +779,9 @@ At tool call:
 * Call tr064.Client.Call(...) using ordered ActionSpec.In
 * Convert result map[string]string to JSON out_args
 
-=== TR-064 Services Reference
+=== Available Services
 
-Generated from:
-
-* https://fritz.support/schnittstellen/TR-064_overview.pdf[TR-064 Support – Overview (PDF)]
-* https://fritz.support/resources/TR-064_Device_Info.pdf[TR-064 Support – DeviceInfo (PDF)]
-* https://fritz.support/resources/TR-064_First_Steps.pdf[TR-064 – First Steps (PDF)]
-* https://fritz.com/pages/schnittstellen[FRITZ! Interfaces overview page]
-
-==== Standard TR-064 services
+==== Standard services
 
 * `deviceconfig`
 * `deviceinfo`
@@ -832,13 +825,12 @@ Generated from:
 * `X_VoIP`
 * `X_AVM-DE_WebDAV`
 
-NOTE: Actual availability per device (FRITZ!Box vs Repeater) is defined in the TR-064 Overview table; your runtime client should always discover services from `/tr64desc.xml`.
+NOTE: Actual availability per device (FRITZ!Box vs Repeater) varies; the runtime client always discovers services from `/tr64desc.xml`.
 
 ==== Example Service: deviceinfo
 
 Service name:: `deviceinfo`
 Service ID (SCPD):: `urn:DeviceInfo-com:serviceId:DeviceInfo1`
-Spec:: https://fritz.support/resources/TR-064_Device_Info.pdf[TR-064 Support – DeviceInfo (PDF)]
 
 This service exposes general information about the FRITZ! device: manufacturer, model, serial, hardware/firmware version, and uptime.
 
@@ -859,7 +851,7 @@ Each of these is returned as an "out" parameter by the SOAP action:
 * `NewSerialNumber` → device serial number
 * `NewSoftwareVersion` → firmware/software version
 * `NewHardwareVersion` → hardware revision
-* `NewSpecVersion` → TR-064 spec version implemented
+* `NewSpecVersion` → service specification version implemented
 * `NewProvisioningCode` → provisioning code (if used)
 * `NewUpTime` → device uptime (seconds)
 * `NewDeviceLog` → implementation-specific device log string

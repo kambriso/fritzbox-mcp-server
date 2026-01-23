@@ -25,7 +25,7 @@ A standalone test program to verify FRITZ!Box connectivity and device informatio
 The test will:
 1. Load configuration from `.env`
 2. Connect to your FRITZ!Box
-3. Discover all available TR-064 services
+3. Discover all available services
 4. Retrieve device information (model, firmware, serial, etc.)
 5. Display the results in human-readable format and JSON
 
@@ -37,7 +37,7 @@ The test will:
 1. Loading configuration from .env...
    ✓ Configured for: http://fritz.box:49000
 
-2. Creating TR-064 client...
+2. Creating API client...
    ✓ Client created
 
 3. Discovering services from FRITZ!Box...
