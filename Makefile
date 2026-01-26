@@ -307,3 +307,43 @@ run-wasi-container: container-wasi ## Run WASI OCI container with podman (use AR
 .PHONY: deps
 deps: ## List dependencies
 	@$(GO) list -m all
+
+# SLSA verification
+SLSA_TAG ?= $(VERSION)
+GITHUB_REPO ?= jhinrichsen/fritzbox-mcp-server
+GITLAB_REPO ?= jhinrichsen/fritzbox-mcp-server
+VERIFY_DIR ?= $(BUILD_DIR)/verify
+
+.PHONY: verify-slsa-github
+verify-slsa-github: ## Verify GitHub release SLSA provenance (use SLSA_TAG=v0.x.x)
+	@mkdir -p $(VERIFY_DIR)/github
+	gh release download $(SLSA_TAG) -R $(GITHUB_REPO) -D $(VERIFY_DIR)/github --clobber
+	@echo "Verifying GitHub SLSA Level 3 provenance..."
+	@for f in $(VERIFY_DIR)/github/fritz-mcp-*; do \
+		[ -f "$$f" ] && [ "$${f##*.}" != "jsonl" ] && \
+		echo "  $$f" && \
+		slsa-verifier verify-artifact "$$f" \
+			--provenance-path $(VERIFY_DIR)/github/multiple.intoto.jsonl \
+			--source-uri github.com/$(GITHUB_REPO) || exit 1; \
+	done
+	@echo "GitHub SLSA verification passed"
+
+.PHONY: verify-slsa-gitlab
+verify-slsa-gitlab: ## Verify GitLab release signatures (use SLSA_TAG=v0.x.x)
+	@mkdir -p $(VERIFY_DIR)/gitlab
+	glab release download $(SLSA_TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab
+	@echo "Verifying GitLab SLSA Level 2 signatures..."
+	@for f in $(VERIFY_DIR)/gitlab/fritz-mcp-*; do \
+		[ -f "$$f" ] && [ "$${f##*.}" != "sig" ] && [ "$${f##*.}" != "pem" ] && \
+		echo "  $$f" && \
+		cosign verify-blob \
+			--signature "$$f.sig" \
+			--certificate "$$f.pem" \
+			--certificate-identity-regexp '.*' \
+			--certificate-oidc-issuer https://gitlab.com \
+			"$$f" || exit 1; \
+	done
+	@echo "GitLab SLSA verification passed"
+
+.PHONY: verify-slsa
+verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify SLSA provenance on both forges
