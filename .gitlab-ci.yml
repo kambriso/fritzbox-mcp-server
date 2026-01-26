@@ -13,9 +13,25 @@ release:
   image: golang:1.25
   only:
     - tags
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
   script:
     - make dists
     - cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS
+    # Install cosign
+    - apt-get update && apt-get install -y curl
+    - curl -sSL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o /usr/local/bin/cosign
+    - chmod +x /usr/local/bin/cosign
+    # Sign each binary with keyless signing (OIDC)
+    - |
+      for f in $(find build -type f -name 'fritz-mcp*'); do
+        cosign sign-blob --yes \
+          --oidc-issuer=https://gitlab.com \
+          --output-signature="${f}.sig" \
+          --output-certificate="${f}.pem" \
+          "$f"
+      done
   artifacts:
     paths:
       - build/

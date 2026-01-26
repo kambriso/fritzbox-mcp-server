@@ -7,10 +7,15 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  actions: read
+  attestations: write
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v4
@@ -39,6 +44,42 @@ jobs:
           cp build/windows/arm64/fritz-mcp.exe release/fritz-mcp-windows-arm64.exe
           cp build/wasi/wasm/fritz-mcp.wasm release/fritz-mcp.wasm
           cd release && sha256sum fritz-mcp-* > SHA256SUMS
+
+      - name: Generate hashes for SLSA provenance
+        id: hash
+        run: |
+          cd release
+          echo "hashes=$(sha256sum fritz-mcp-* | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+          retention-days: 5
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: ${{ needs.build.outputs.hashes }}
+      upload-assets: true
+
+  release:
+    needs: [build, provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
