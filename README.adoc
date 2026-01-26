@@ -1,5 +1,5 @@
 = FRITZ!Box MCP Server
-:toc: left
+:toc: macro
 :toclevels: 3
 :sectnums:
 
@@ -8,6 +8,8 @@ Control your FRITZ!Box router through AI assistants like Claude using natural la
 link:README-de.adoc[🇩🇪 Deutsche Version] | link:COMPARISON.adoc[Comparison with Other Solutions] | link:CHANGELOG.adoc[Changelog]
 
 https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
+
+toc::[]
 
 == Introduction
 
