@@ -1,6 +1,6 @@
 .POSIX:
 
-VERSION != git describe --tags --always --dirty
+VERSION != v=$$(git describe --tags --always --dirty); echo $${v\#v}
 COMMIT != git rev-parse --short HEAD
 
 # Reproducible builds
