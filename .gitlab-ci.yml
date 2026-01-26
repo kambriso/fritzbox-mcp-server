@@ -38,4 +38,5 @@ release:
       - SHA256SUMS
   release:
     tag_name: $CI_COMMIT_TAG
-    description: "Release $CI_COMMIT_TAG"
+    name: "${CI_COMMIT_TAG#v}"
+    description: "Release ${CI_COMMIT_TAG#v}"
