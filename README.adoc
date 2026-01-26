@@ -78,7 +78,7 @@ Customize installation:
 [source,bash]
 ----
 # Install specific version
-FRITZBOX_MCP_VERSION=v0.7.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+FRITZBOX_MCP_VERSION=<tag> curl -fsSL https://raw.githubusercontent.com/jhinrichsen/fritzbox-mcp-server/main/install.sh | sh
 
 # Install to custom directory
 FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
@@ -528,8 +528,8 @@ To verify that GitHub and GitLab releases are identical:
 [source,bash]
 ----
 # Download checksums from both forges
-gh release download v0.7.0 -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
-glab release download v0.7.0 -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
+gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
+glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
 
 # Compare
 diff github/SHA256SUMS gitlab/SHA256SUMS && echo "Releases are identical"
