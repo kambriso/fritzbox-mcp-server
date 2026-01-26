@@ -9,6 +9,13 @@ link:README-de.adoc[🇩🇪 Deutsche Version] | link:COMPARISON.adoc[Comparison
 
 https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
 
+https://github.com/jhinrichsen/fritzbox-mcp-server/actions/workflows/build.yml[image:https://github.com/jhinrichsen/fritzbox-mcp-server/actions/workflows/build.yml/badge.svg[Build]]
+https://github.com/jhinrichsen/fritzbox-mcp-server/releases/latest[image:https://img.shields.io/github/v/release/jhinrichsen/fritzbox-mcp-server[Release]]
+https://gitlab.com/jhinrichsen/fritzbox-mcp-server/-/pipelines[image:https://gitlab.com/jhinrichsen/fritzbox-mcp-server/badges/main/pipeline.svg[Pipeline]]
+image:https://img.shields.io/badge/SLSA-Level%203-green[SLSA Level 3]
+image:https://img.shields.io/github/license/jhinrichsen/fritzbox-mcp-server[License]
+image:https://img.shields.io/github/go-mod/go-version/jhinrichsen/fritzbox-mcp-server[Go Version]
+
 toc::[]
 
 == Introduction
