@@ -15,6 +15,11 @@ release:
     - tags
   script:
     - make dists
+    - cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS
   artifacts:
     paths:
       - build/
+      - SHA256SUMS
+  release:
+    tag_name: $CI_COMMIT_TAG
+    description: "Release $CI_COMMIT_TAG"
