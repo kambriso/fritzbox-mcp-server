@@ -78,7 +78,7 @@ Customize installation:
 [source,bash]
 ----
 # Install specific version
-FRITZBOX_MCP_VERSION=v0.6.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+FRITZBOX_MCP_VERSION=v0.7.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
 
 # Install to custom directory
 FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
@@ -303,7 +303,7 @@ All communication stays on your local network. Your credentials are stored local
 
 No cloud services. No external servers. Everything runs locally.
 
-==== Binary Verification (v0.5.0)
+==== Binary Verification
 
 Independent VirusTotal scans confirm the binaries are clean:
 
@@ -359,12 +359,12 @@ This server is runtime-driven and model-agnostic:
 
 === MCP SDK Choice
 
-This project uses the community MCP SDK (https://github.com/mark3labs/mcp-go[mark3labs/mcp-go] v0.7.0) instead of the official SDK (modelcontextprotocol/go-sdk) due to compatibility issues with Claude Code:
+This project uses the community MCP SDK (https://github.com/mark3labs/mcp-go[mark3labs/mcp-go] v0.7.0) instead of the official SDK (modelcontextprotocol/go-sdk) due to compatibility issues:
 
-* Official SDK issues: Tools fail to appear in Claude Code despite proper registration
+* Official SDK issues: Tools fail to appear in MCP clients despite proper registration
 ** https://github.com/modelcontextprotocol/go-sdk/issues/395[Issue #395]: Initialization race conditions and client timeouts
 ** https://github.com/modelcontextprotocol/go-sdk/issues/200[Issue #200]: Schema generation issues with pointer types (fixed in PR #338)
-* Community SDK: Battle-tested with Claude Code, no known compatibility issues
+* Community SDK: Battle-tested, no known compatibility issues
 * API incompatibility: The two SDKs are not API-compatible (see https://github.com/modelcontextprotocol/go-sdk/blob/main/design/design.md[official SDK design doc])
 
 The official SDK uses a different JSON-RPC implementation and lower-level transport interface. While both SDKs work standalone, the community SDK has proven more reliable for stdio transport with Claude Code clients.
@@ -528,8 +528,8 @@ To verify that GitHub and GitLab releases are identical:
 [source,bash]
 ----
 # Download checksums from both forges
-gh release download v0.6.1 -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
-glab release download v0.6.1 -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
+gh release download v0.7.0 -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
+glab release download v0.7.0 -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
 
 # Compare
 diff github/SHA256SUMS gitlab/SHA256SUMS && echo "Releases are identical"
