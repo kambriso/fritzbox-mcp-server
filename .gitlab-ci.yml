@@ -20,11 +20,12 @@ release:
     - VERSION=${CI_COMMIT_TAG#v}
     - echo "VERSION=$VERSION" >> release.env
     - make dists
-    - cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS
-    # Install cosign
+    - (cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS)
+    # Install cosign and glab
     - apt-get update && apt-get install -y curl
     - curl -sSL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o /usr/local/bin/cosign
     - chmod +x /usr/local/bin/cosign
+    - curl -sSL https://gitlab.com/gitlab-org/cli/-/releases/v1.58.0/downloads/glab_1.58.0_linux_amd64.tar.gz | tar -xzf - -C /usr/local/bin --strip-components=1 bin/glab
     # Sign each binary with keyless signing (OIDC)
     - |
       for f in $(find build -type f -name 'fritz-mcp*'); do
