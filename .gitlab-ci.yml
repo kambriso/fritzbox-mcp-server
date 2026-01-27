@@ -3,29 +3,30 @@ variables:
 
 test:
   image: golang:1.25
-  except:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
   script:
     - make tidy
     - make test
 
-release:
+build:
   image: golang:1.25
-  only:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
     - VERSION=${CI_COMMIT_TAG#v}
-    - echo "VERSION=$VERSION" >> release.env
+    - echo "VERSION=$VERSION" >> build.env
     - make dists
     - (cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS)
-    # Install cosign and glab
+    # Install cosign for signing
     - apt-get update && apt-get install -y curl
     - curl -sSL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o /usr/local/bin/cosign
     - chmod +x /usr/local/bin/cosign
-    - curl -sSL https://gitlab.com/gitlab-org/cli/-/releases/v1.58.0/downloads/glab_1.58.0_linux_amd64.tar.gz | tar -xzf - -C /usr/local/bin --strip-components=1 bin/glab
     # Sign each binary with keyless signing (OIDC)
     - |
       for f in $(find build -type f -name 'fritz-mcp*'); do
@@ -40,8 +41,22 @@ release:
       - build/
       - SHA256SUMS
     reports:
-      dotenv: release.env
+      dotenv: build.env
+
+release:
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - job: build
+      artifacts: true
+  script:
+    - echo "Creating release $VERSION"
   release:
     tag_name: $CI_COMMIT_TAG
     name: $VERSION
     description: Release $VERSION
+    assets:
+      links:
+        - name: SHA256SUMS
+          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/SHA256SUMS"
