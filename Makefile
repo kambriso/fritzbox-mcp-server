@@ -348,3 +348,53 @@ verify-slsa-gitlab: ## Verify GitLab release signatures (use SLSA_TAG=v0.x.x)
 
 .PHONY: verify-slsa
 verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify SLSA provenance on both forges
+
+# VirusTotal scanning (requires VT_API_KEY environment variable)
+define vt-scan
+	@echo "Scanning $(1)..."
+	@curl -s --request POST \
+		--url https://www.virustotal.com/api/v3/files \
+		--header "x-apikey: $(VT_API_KEY)" \
+		--form file=@"$(1)" > /dev/null
+	@echo "$(notdir $(1)): https://www.virustotal.com/gui/file/$$(sha256sum $(1) | cut -d' ' -f1)" >> VT_RESULTS.txt
+endef
+
+.PHONY: virustotal
+virustotal: virustotal-linux-amd64 virustotal-linux-arm64 virustotal-linux-386 virustotal-linux-arm virustotal-darwin-amd64 virustotal-darwin-arm64 virustotal-windows-amd64 virustotal-windows-arm64 virustotal-wasi-wasm ## Scan all binaries with VirusTotal
+	@cat VT_RESULTS.txt
+
+.PHONY: virustotal-linux-amd64
+virustotal-linux-amd64: $(BUILD_DIR)/linux/amd64/$(BINARY)
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-linux-arm64
+virustotal-linux-arm64: $(BUILD_DIR)/linux/arm64/$(BINARY)
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-linux-386
+virustotal-linux-386: $(BUILD_DIR)/linux/386/$(BINARY)
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-linux-arm
+virustotal-linux-arm: $(BUILD_DIR)/linux/arm/$(BINARY)
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-darwin-amd64
+virustotal-darwin-amd64: $(BUILD_DIR)/darwin/amd64/$(BINARY)
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-darwin-arm64
+virustotal-darwin-arm64: $(BUILD_DIR)/darwin/arm64/$(BINARY)
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-windows-amd64
+virustotal-windows-amd64: $(BUILD_DIR)/windows/amd64/$(BINARY).exe
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-windows-arm64
+virustotal-windows-arm64: $(BUILD_DIR)/windows/arm64/$(BINARY).exe
+	$(call vt-scan,$<)
+
+.PHONY: virustotal-wasi-wasm
+virustotal-wasi-wasm: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm
+	$(call vt-scan,$<)
