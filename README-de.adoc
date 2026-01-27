@@ -1,28 +1,60 @@
 = FRITZ!Box MCP Server
+:toc: macro
+:toclevels: 3
+:sectnums:
 
 Steuere deine FRITZ!Box über KI-Assistenten wie Claude mit natürlicher Sprache.
 
-link:README.adoc[🇬🇧 English Version]
+link:README.adoc[🇬🇧 English Version] | link:COMPARISON.adoc[Vergleich mit anderen Lösungen] | link:CHANGELOG.adoc[Changelog]
 
 https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
 
-== Was ist das?
+https://github.com/jhinrichsen/fritzbox-mcp-server/actions/workflows/build.yml[image:https://github.com/jhinrichsen/fritzbox-mcp-server/actions/workflows/build.yml/badge.svg[Build]]
+https://github.com/jhinrichsen/fritzbox-mcp-server/releases/latest[image:https://img.shields.io/github/v/release/jhinrichsen/fritzbox-mcp-server[Release]]
+https://gitlab.com/jhinrichsen/fritzbox-mcp-server/-/pipelines[image:https://gitlab.com/jhinrichsen/fritzbox-mcp-server/badges/main/pipeline.svg[Pipeline]]
+image:https://img.shields.io/badge/SLSA-Level%203-green[SLSA Level 3]
+image:https://img.shields.io/github/license/jhinrichsen/fritzbox-mcp-server[License]
+image:https://img.shields.io/github/go-mod/go-version/jhinrichsen/fritzbox-mcp-server[Go Version]
 
-Dieser MCP-Server ermöglicht die Steuerung deiner FRITZ!Box über KI-Assistenten. Stelle Fragen in natürlicher Sprache, analysiere dein Netzwerk, verwalte Geräte, behebe Probleme und konfiguriere Einstellungen - ohne die Web-Oberfläche zu berühren.
+toc::[]
 
-Deine FRITZ!Box-Zugangsdaten verlassen niemals deinen Computer. Alles läuft lokal auf deinem Rechner.
+== Einleitung
 
-== Warum diesen Server nutzen?
+=== Was ist das?
+
+Dieser MCP-Server ermöglicht die Interaktion mit deiner FRITZ!Box über KI-Assistenten. Stelle Fragen in natürlicher Sprache, analysiere dein Netzwerk, verwalte Geräte, behebe Probleme und konfiguriere Einstellungen - ohne die Web-Oberfläche zu berühren.
+
+=== So funktioniert es (Sicherheitsarchitektur)
+
+image::architecture.svg[Architektur-Diagramm]
+
+Der MCP-Server läuft auf deinem Computer und fungiert als sichere Brücke zwischen KI-Agenten (die in der Cloud laufen) und deiner FRITZ!Box (die komplett lokal bleibt).
+
+Deine FRITZ!Box-Zugangsdaten werden lokal in einer `.env` Datei auf deinem Computer gespeichert. Der MCP-Server verwendet diese Zugangsdaten nur für die Kommunikation mit deiner FRITZ!Box über dein lokales Netzwerk.
+
+Der KI-Agent erhält nur die Ergebnisse (wie "3 Geräte verbunden" oder "Router-Laufzeit: 5 Tage"), niemals deine Zugangsdaten oder direkten Zugriff auf deinen Router.
+
+Kritische Sicherheitsmerkmale:
+
+* Deine FRITZ!Box braucht keine Internet-Exposition
+* Keine Ports müssen geöffnet werden
+* Keine Cloud-Verbindung zu deinem Router
+* Zugangsdaten bleiben auf deinem Computer
+* Alle Router-Kommunikation erfolgt nur über dein lokales Netzwerk
+
+=== Warum diesen Server nutzen?
 
 Funktioniert mit ALLEN FRITZ!Box-Modellen und Firmware-Versionen. Wenn AVM neue Features oder Modelle veröffentlicht, passt sich dieser Server automatisch an. Keine Updates nötig.
 
 Anders als andere Lösungen, die bei Firmware-Updates kaputt gehen oder nur mit bestimmten Modellen funktionieren, erkennt dieser Server die Fähigkeiten deines Routers in Echtzeit.
 
-== Schnellstart
+== Benutzerhandbuch
 
-=== 1. Installation
+=== Schnellstart
 
-==== Automatische Installation (Linux/macOS - Empfohlen)
+==== 1. Installation
+
+===== Automatische Installation (Linux/macOS - Empfohlen)
 
 Download und Installation mit automatischer Checksummen-Verifizierung:
 
@@ -46,14 +78,14 @@ Installation anpassen:
 [source,bash]
 ----
 # Spezifische Version installieren
-FRITZBOX_MCP_VERSION=v0.6.0 curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
+FRITZBOX_MCP_VERSION=<tag> curl -fsSL https://raw.githubusercontent.com/jhinrichsen/fritzbox-mcp-server/main/install.sh | sh
 
 # In benutzerdefiniertes Verzeichnis installieren
 FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
 ----
 ====
 
-==== Manuelle Installation (Alle Plattformen)
+===== Manuelle Installation (Alle Plattformen)
 
 Lade die Binärdatei für dein System von https://github.com/kambriso/fritzbox-mcp-server/releases[Releases]:
 
@@ -70,7 +102,7 @@ chmod +x fritz-mcp
 
 Windows: Entpacke die ZIP-Datei.
 
-=== 2. Konfigurationsdatei erstellen
+==== 2. Konfigurationsdatei erstellen
 
 Erstelle eine Datei namens `.env` mit deinen FRITZ!Box-Zugangsdaten:
 
@@ -96,7 +128,7 @@ Diese Datei enthält dein Passwort. Halte sie sicher und committe sie niemals in
 Unter Linux/macOS: Zugriff beschränken mit `chmod 600 ~/.config/fritzbox-mcp-server/.env`
 ====
 
-=== 3. FRITZ!Box Benutzerberechtigungen
+==== 3. FRITZ!Box Benutzerberechtigungen
 
 Dein FRITZ!Box-Benutzer benötigt vollen Zugriff auf die Einstellungen.
 
@@ -105,7 +137,7 @@ In der FRITZ!Box Web-Oberfläche (http://fritz.box):
 1. Gehe zu System → FRITZ!Box-Benutzer → [Dein Benutzer] → Berechtigungen
 2. Aktiviere: "FRITZ!Box-Einstellungen" (oder "Der Benutzer kann alle Einstellungen der FRITZ!Box sehen und bearbeiten")
 
-=== 4. Claude Desktop konfigurieren
+==== 4. Claude Desktop konfigurieren
 
 Bearbeite deine Claude Desktop Konfigurationsdatei:
 
@@ -137,9 +169,9 @@ macOS/Linux mit manueller Installation: Absoluter Pfad zur Binärdatei, z.B. `/U
 
 Starte Claude Desktop neu.
 
-== Was kannst du damit machen?
+=== Was kannst du damit machen?
 
-=== Fragen stellen
+==== Fragen stellen
 
 "Was ist meine externe IP-Adresse?"
 
@@ -151,7 +183,7 @@ Starte Claude Desktop neu.
 
 "Ist mein WLAN sicher?"
 
-=== Netzwerk analysieren
+==== Netzwerk analysieren
 
 "Analysiere meine Netzwerk-Gesundheit und sag mir ob alles gut aussieht"
 
@@ -178,7 +210,7 @@ Muster, aber als isolierter Vorfall nicht besorgniserregend.
 Gesamt: Netzwerk arbeitet optimal.
 ----
 
-=== Geräte verwalten
+==== Geräte verwalten
 
 "Zeige alle WLAN-Geräte"
 
@@ -188,7 +220,7 @@ Gesamt: Netzwerk arbeitet optimal.
 
 "Priorisiere die Bandbreite meines Laptops - ich habe einen Videoanruf"
 
-=== Kindersicherung & Zeitsteuerung
+==== Kindersicherung & Zeitsteuerung
 
 "Sperre die Nintendo Switch in 20 Minuten"
 
@@ -196,7 +228,7 @@ Gesamt: Netzwerk arbeitet optimal.
 
 "Aktiviere Gast-WLAN um 18 Uhr für die Party"
 
-=== Fehlerbehebung
+==== Fehlerbehebung
 
 "Warum ist mein Internet langsam?"
 
@@ -204,9 +236,9 @@ Gesamt: Netzwerk arbeitet optimal.
 
 "Zeige mir die letzten Verbindungsabbrüche"
 
-== Beispiele
+=== Beispiele
 
-=== Netzwerk-Gesundheits-Check
+==== Netzwerk-Gesundheits-Check
 
 Prompt: "Analysiere meine Netzwerk-Gesundheit und prüfe ob alles optimal läuft"
 
@@ -219,154 +251,29 @@ Claude arbeitet autonom:
 5. Unterscheidet normales Verhalten von Problemen
 6. Gibt Empfehlungen
 
-=== Netzwerk-Geräte-Inventar
+==== Geräte-Inventar
 
-Prompt: "Zeige mir alle Geräte im Netzwerk - welche sind online und gibt es unbekannte Geräte?"
+Prompt: "Zeige mir alle Geräte - welche sind online und gibt es unbekannte Geräte?"
 
-Claude durchläuft autonom:
+Claude:
 
-1. Abrufen der Gesamtanzahl der Hosts
-2. Iterieren durch alle Geräte (parallele API-Aufrufe)
-3. Kategorisierung nach Status (aktiv/inaktiv)
-4. Gruppierung nach Verbindungsart (WLAN/Ethernet)
-5. Identifikation unbekannter Geräte
-6. Sicherheitsanalyse und Empfehlungen
+1. Listet alle registrierten Geräte auf
+2. Kategorisiert nach Status (online/offline)
+3. Gruppiert nach Verbindungstyp (WLAN/Ethernet)
+4. Identifiziert unbekannte oder verdächtige Geräte
+5. Liefert Sicherheitsanalyse
 
-Beispiel-Analyse:
-[source,text]
-----
-Netzwerk-Geräte-Analyse
+==== Zeitgesteuerte Aktionen
 
-Status-Übersicht
-Gesamt: 27 registrierte Geräte
-- Online: 6 Geräte
-- Offline: 21 Geräte
-
-Aktive Geräte (derzeit online)
-
-WLAN-Geräte (802.11):
-1. Wohnzimmer - 192.168.178.39 (Smart TV)
-2. Tablet - 192.168.178.78
-3. Smartphone - 192.168.178.33
-
-Ethernet-Geräte:
-1. Desktop-PC - 192.168.178.81
-2. FRITZ!Repeater - 192.168.178.24 (Mesh-Erweiterung)
-3. FRITZ!Box - 192.168.178.1 (Router)
-
-Offline-Geräte (zuletzt gesehen)
-
-Mobile Geräte:
-- Laptop - 192.168.178.71
-- Smartphone-2 - 192.168.178.88
-- E-Reader - 192.168.178.23
-- Smartwatch - 192.168.178.85
-- Gaming-Konsole - 192.168.178.35
-
-Unbekannte Geräte:
-- 9 Geräte mit generischen "PC-" Namen ohne IP-Adresse
-
-Analyse und Empfehlungen
-
-Auffälligkeiten:
-1. 9 Geräte mit generischen Namen ohne IP - vermutlich einmalige
-   Gast-Verbindungen mit randomisierten MAC-Adressen (Privacy-Feature)
-2. Ein Gerät ist dual-connected (Ethernet + WLAN parallel)
-3. FRITZ!Repeater bei .24 erkannt (Mesh-Netzwerk aktiv)
-
-Sicherheitshinweise:
-- Alle aktiven Geräte haben sprechende Namen (gut identifizierbar)
-- 9 unbekannte Einträge sind inaktiv (alte Gast-Verbindungen)
-- Randomisierte MAC-Adressen erkennbar (02:, 06: Präfixe)
-
-Empfehlung:
-Die inaktiven "PC-" Einträge können gelöscht werden um die Übersicht
-zu verbessern. Sie stammen vermutlich von Gast-Geräten mit MAC-
-Randomisierung.
-
-Aktuell keine Sicherheitsbedenken - alle aktiven Geräte sind bekannt.
-----
-
-=== Bandbreiten-Priorisierung
-
-Prompt: "Mein Video im Wohnzimmer ruckelt - setze die Bandbreite hoch"
-
-Claude führt autonom durch:
-
-1. Scannen aller aktiven Geräte im Netzwerk
-2. Identifikation des Ziel-Geräts anhand des Namens "Wohnzimmer"
-3. Abruf der aktuellen Prioritäts-Einstellung
-4. Setzen der hohen Priorität via QoS
-5. Verifizierung der Änderung
-6. Benutzerfreundliche Rückmeldung
-
-Beispiel-Ausgabe:
-[source,text]
-----
-Bandbreiten-Priorisierung
-
-Gerät identifiziert:
-- Name: Wohnzimmer
-- IP: 192.168.178.39
-- Verbindung: WLAN (780 Mbit/s)
-- Aktuelle Priorität: Normal
-
-Aktion: Priorität auf "Hoch" gesetzt ✓
-
-Das Gerät "Wohnzimmer" erhält jetzt bevorzugt Bandbreite.
-Die FRITZ!Box wird diesem Gerät Vorrang vor anderen Geräten
-im Netzwerk geben.
-
-Tipp: Wenn das Video wieder flüssig läuft, kannst du die
-Priorität später wieder zurücksetzen mit "Setze Wohnzimmer
-auf normale Priorität".
-----
-
-Praktische Anwendungsfälle:
-
-* Video-Streaming ruckelt → Priorität für Smart TV erhöhen
-* Video-Konferenz im Homeoffice → Laptop priorisieren
-* Online-Gaming laggt → Gaming-Konsole bevorzugen
-* Downloads drosseln → Unwichtige Geräte depriorisieren
-
-=== Zeitgesteuerte Aktionen
-
-Prompt: "Sperre Kevins Nintendo Switch in 20 Minuten - er hat genug gezockt"
+Prompt: "Sperre die Gaming-Konsole in 20 Minuten"
 
 Claude plant die Aktion und führt sie automatisch aus, auch nachdem du den Chat geschlossen hast.
 
 Dies nutzt den CLI-Modus des Servers für persistente Hintergrund-Ausführung.
 
-Beispiel-Ausgabe:
-[source,text]
-----
-Internet-Sperre geplant
+=== Fehlerbehebung
 
-Gerät identifiziert:
-- Name: Nintendo Switch
-- IP: 192.168.178.35
-- Aktueller Status: Internet erlaubt
-
-Aktion: Zeitverzögerte Sperre in 20 Minuten (19:40 Uhr)
-Job-ID: 42
-
-Die Nintendo Switch wird automatisch um 19:40 Uhr gesperrt.
-Job läuft persistent im Hintergrund (überlebt Session-Ende).
-
-Zum Abbrechen: at -r 42
-----
-
-Praktische Anwendungsfälle:
-
-* Elternkontrolle: "Sperre Smartphone in 30 Minuten"
-* Arbeitszeit: "Sperre Gaming-Konsole von 9-17 Uhr" (cron)
-* Gäste-Netz: "Aktiviere Gast-WLAN um 18:00" (at)
-* Bandbreite: "Priorisiere Meeting-Laptop in 5 Minuten"
-* Wartung: "Starte Router-Neustart um 3:00 nachts" (cron)
-
-== Fehlerbehebung
-
-=== Kann nicht zur FRITZ!Box verbinden
+==== Kann nicht zur FRITZ!Box verbinden
 
 Prüfe ob dein Router erreichbar ist:
 [source,bash]
@@ -378,7 +285,7 @@ ping fritz.box
 
 Stelle sicher, dass dein FRITZ!Box-Benutzer die volle Einstellungs-Berechtigung hat.
 
-=== Claude Desktop findet den Server nicht
+==== Claude Desktop findet den Server nicht
 
 Überprüfe ob der Pfad in `claude_desktop_config.json` absolut und korrekt ist.
 
@@ -386,17 +293,17 @@ Windows: Verwende doppelte Backslashes in Pfaden.
 
 Starte Claude Desktop nach Konfigurationsänderungen neu.
 
-=== Berechtigungsfehler
+==== Berechtigungsfehler
 
 Dein FRITZ!Box-Benutzer benötigt die "FRITZ!Box-Einstellungen" Berechtigung. Siehe Konfigurationsabschnitt oben.
 
-== Datenschutz & Sicherheit
+=== Datenschutz & Sicherheit
 
 Alle Kommunikation bleibt in deinem lokalen Netzwerk. Deine Zugangsdaten werden lokal in einer `.env` Datei gespeichert und nur für die Kommunikation mit deiner FRITZ!Box verwendet. Die KI erhält nur die Ergebnisse der Operationen, niemals deine Zugangsdaten.
 
 Keine Cloud-Dienste. Keine externen Server. Alles läuft lokal.
 
-=== Binär-Verifizierung (v0.5.0)
+==== Binär-Verifizierung
 
 Unabhängige VirusTotal-Scans bestätigen, dass die Binärdateien sauber sind:
 
@@ -404,6 +311,322 @@ Unabhängige VirusTotal-Scans bestätigen, dass die Binärdateien sauber sind:
 * https://www.virustotal.com/gui/file/ace64b3d9dcb47476407938cfc010e888d481da49185c7f392901303d99786ed[linux-arm64]
 * https://www.virustotal.com/gui/file/65fb7ccad5d7e83210a788d1fc3e4b9a69c1dbaee2af81ada82fdb0474c26e36[darwin-arm64]
 * https://www.virustotal.com/gui/file/c4b0d05b2a4d60bb34d149974779d7115d31f4568dadd4843e6c5b3e275c5c17[windows-amd64]
+
+=== Token-Nutzung Hinweise
+
+Dieser MCP-Server stellt 143 Tools für den KI-Assistenten bereit. Jede Tool-Definition (Name, Beschreibung, JSON-Schema) wird mit jeder Nachricht gesendet.
+
+==== Auswirkungen auf Claude Code / Claude API
+
+* Token-Overhead: ~25.000-30.000 Tokens pro Nachricht nur für Tool-Definitionen
+* Kostenabschätzung: ~$0,08/Nachricht (Sonnet) oder ~$0,45/Nachricht (Opus) an Tool-Overhead
+* Kontext-Nutzung: Tool-Schemas verbrauchen Kontext-Fenster-Platz, der für Konversation genutzt werden könnte
+
+==== Empfehlungen
+
+===== Für gelegentliche Nutzung
+Deaktiviere den Server wenn nicht benötigt:
+
+[source,bash]
+----
+# In Claude Code, MCP-Server deaktivieren:
+claude --mcp-server fritzbox=off
+
+# Oder aus mcpServers in ~/.claude.json entfernen
+----
+
+===== Für häufige Nutzung
+Erwäge die Aktivierung nur für spezifische Projekte die Router-Zugriff benötigen, anstatt global.
+
+===== Für lokale LLMs
+Bei Verwendung mit lokalen Modellen (llama.cpp, Ollama) können 143 Tools kleinere Modelle überfordern. Verwende Tool-Filterung um nur benötigte Tools bereitzustellen.
+
+[TIP]
+====
+Nach der ersten Nachricht in einer Session reduziert Claudes Prompt-Caching die Token-Kosten für folgende Nachrichten. Der Overhead ist am bedeutendsten bei kurzen Konversationen.
+====
+
+== Entwicklerhandbuch
+
+=== Architektur
+
+Dieser Server ist laufzeitgesteuert und modellunabhängig:
+
+* Keine hartkodierten Service-Strukturen
+* Erkennt Fähigkeiten dynamisch aus den Service-Deskriptoren deiner FRITZ!Box
+* Funktioniert automatisch mit Firmware-Updates
+* Unterstützt alle FRITZ!Box-Modelle (getestet mit 7490, 7590)
+
+=== MCP SDK Auswahl
+
+Dieses Projekt verwendet das Community MCP SDK (https://github.com/mark3labs/mcp-go[mark3labs/mcp-go] v0.7.0) anstelle des offiziellen SDK (modelcontextprotocol/go-sdk) aufgrund von Kompatibilitätsproblemen:
+
+* Offizielle SDK Probleme: Tools erscheinen nicht in MCP-Clients trotz korrekter Registrierung
+** https://github.com/modelcontextprotocol/go-sdk/issues/395[Issue #395]: Initialisierungs-Race-Conditions und Client-Timeouts
+** https://github.com/modelcontextprotocol/go-sdk/issues/200[Issue #200]: Schema-Generierungsprobleme mit Pointer-Typen (behoben in PR #338)
+* Community SDK: Praxiserprobt, keine bekannten Kompatibilitätsprobleme
+* API-Inkompatibilität: Die beiden SDKs sind nicht API-kompatibel (siehe https://github.com/modelcontextprotocol/go-sdk/blob/main/design/design.md[offizielles SDK Design-Dokument])
+
+Das offizielle SDK verwendet eine andere JSON-RPC-Implementierung und eine niedrigere Transport-Schnittstelle. Während beide SDKs eigenständig funktionieren, hat sich das Community SDK als zuverlässiger für stdio-Transport mit Claude Code Clients erwiesen.
+
+=== Entwicklungsumgebung
+
+==== Voraussetzungen
+
+* Go 1.25 oder höher
+* Ein FRITZ!Box-Router in deinem lokalen Netzwerk zum Testen
+* FRITZ!Box Benutzername und Passwort
+
+==== Klonen und Bauen
+
+[source,bash]
+----
+git clone git@github.com:kambriso/fritz-mcp.git
+cd fritz-mcp
+make help  # Zeigt verfügbare Build-Targets
+----
+
+==== Konfiguration
+
+Erstelle eine `.env` Datei mit deinen FRITZ!Box-Zugangsdaten:
+
+[source,bash]
+----
+cp .env.example .env
+# Mit deinen Zugangsdaten bearbeiten
+editor .env
+----
+
+Erforderliche Variablen:
+[source,bash]
+----
+FRITZ_HOST=fritz.box          # FRITZ!Box Hostname oder IP
+FRITZ_PORT=49000              # Service-Port (Standard: 49000)
+FRITZ_USERNAME=dein-benutzer  # FRITZ!Box Benutzername
+FRITZ_PASSWORD=dein-passwort  # FRITZ!Box Passwort
+----
+
+==== FRITZ!Box Benutzerberechtigungen
+
+Das Benutzerkonto muss die FRITZ!Box-Einstellungen Berechtigung aktiviert haben:
+
+* Deutsch: "Der Benutzer kann alle Einstellungen der FRITZ!Box sehen und bearbeiten"
+* Englisch: "The user can view and edit all FRITZ!Box settings"
+
+Konfiguriere in der FRITZ!Box Web-Oberfläche:
+
+`System → FRITZ!Box-Benutzer → [Dein Benutzer] → Berechtigungen`
+
+Aktiviere das Kontrollkästchen für "FRITZ!Box-Einstellungen".
+
+=== Bauen
+
+==== Entwicklungs-Build
+
+[source,bash]
+----
+make build
+./fritz-mcp
+----
+
+==== Produktions-Builds
+
+Bauen für alle unterstützten Plattformen:
+
+[source,bash]
+----
+make dists
+----
+
+Dies erstellt Binärdateien in `dist/` für:
+* Linux (amd64, arm64, 386, arm)
+* macOS (amd64, arm64)
+* Windows (amd64, arm64)
+* WASI (wasm) - WebAssembly mit eingeschränkter Funktionalität
+
+==== WASI Build Hinweise
+
+Ein WASI (WebAssembly System Interface) Build ist enthalten um Code-Portabilität zu demonstrieren. Go's wasip1-Target hat jedoch erhebliche Einschränkungen für Netzwerkanwendungen:
+
+* Kein Netzwerkzugriff - Go unterstützt nur WASI Preview 1, dem Socket-APIs fehlen
+* Eingeschränkter Dateisystemzugriff
+* Bietet Capability-basierte Sicherheits-Sandbox
+
+NOTE: Während WasmEdge Sockets unterstützt und WASI Preview 2 wasi-sockets enthält, zielt Go derzeit nur auf wasip1 (versiegelt ohne Netzwerk). WASI Preview 2 wurde im Januar 2024 gestartet, aber Go hat keinen angekündigten Zeitplan für GOOS=wasip2 Unterstützung (verfolgt in https://github.com/golang/go/issues/65333[Issue #65333]). Go 1.24 (Feb 2025) und Go 1.25 (Aug 2025) enthalten kein wasip2.
+
+Empfehlung: Verwende native Binärdateien oder Multi-Arch-Container für Produktion. Der WASI-Build demonstriert WebAssembly-Portabilität, kann aber mit aktuellen Go-Releases nicht als Netzwerkdienst funktionieren.
+
+Bauen für spezifische Plattform:
+
+[source,bash]
+----
+GOOS=linux GOARCH=amd64 make dist
+GOOS=darwin GOARCH=arm64 make dist
+GOOS=windows GOARCH=amd64 make dist
+----
+
+==== Reproduzierbare Builds
+
+Alle Release-Binärdateien sind reproduzierbar: Das Bauen aus dem gleichen Quellcode erzeugt byte-für-byte identische Binärdateien. Dies ermöglicht unabhängige Verifizierung, dass veröffentlichte Binärdateien mit dem Quellcode übereinstimmen.
+
+===== Warum Reproduzierbarkeit wichtig ist
+
+Reproduzierbare Builds ermöglichen:
+
+* Unabhängige Verifizierung von Release-Artefakten
+* Erkennung von Supply-Chain-Manipulation
+* Vertrauen, dass Binärdateien mit geprüftem Quellcode übereinstimmen
+* Grundlage für SLSA-Attestierungen
+
+===== Build-Flags für Reproduzierbarkeit
+
+Das Makefile verwendet diese Flags um deterministische Builds sicherzustellen:
+
+[source,bash]
+----
+-trimpath                    # Entfernt absolute Pfade
+-buildvcs=false              # Deaktiviert VCS-Info-Einbettung
+-buildid=                    # Löscht Build-ID
+SOURCE_DATE_EPOCH=$(git)     # Verwendet Commit-Zeitstempel
+----
+
+===== Toolchain-Anforderungen
+
+Go erzeugt reproduzierbare Binärdateien bei Verwendung der gleichen Toolchain-Distribution. Verschiedene Go-Distributionen (Upstream vs Fedora/Debian-Pakete) können jedoch unterschiedliche Binärdateien erzeugen aufgrund distributions-spezifischer Patches oder Build-Experimente.
+
+Bekannte Unterschiede:
+
+* Fedora Go 1.25.6 enthält `GOEXPERIMENT=nodwarf5` in die Toolchain kompiliert
+* Upstream Go 1.25.6 (von go.dev oder golang:1.25 Container) hat keine Experimente
+* Diese Unterschiede sind in der `.go.buildinfo` Sektion eingebettet
+
+===== Lokale Builds verifizieren
+
+Um GitLab CI Builds lokal zu reproduzieren, verwende den gleichen golang:1.25 Container:
+
+[source,bash]
+----
+# Alle Plattformen im Container bauen (entspricht CI-Umgebung)
+make dists-container
+
+# Mit veröffentlichten Release-Checksummen vergleichen
+sha256sum -c SHA256SUMS
+----
+
+Das golang:1.25 Docker-Image entspricht der Upstream Go Distribution und gewährleistet Reproduzierbarkeit über Umgebungen hinweg.
+
+===== CI/CD Reproduzierbarkeit
+
+Sowohl GitLab CI als auch GitHub Actions verwenden die offizielle Go 1.25 Toolchain: GitLab über das golang:1.25 Container-Image, GitHub über actions/setup-go das von go.dev herunterlädt. Beide erzeugen byte-für-byte identische Binärdateien. Lokale Builds mit distributions-bereitgestellten Go-Paketen (Fedora, Ubuntu, etc.) können unterschiedliche Binärdateien erzeugen aufgrund distro-spezifischer Patches.
+
+Für byte-für-byte reproduzierbare lokale Builds verwende `make dists-container` das im golang:1.25 Container baut.
+
+===== Cross-Forge Verifizierung
+
+Um zu verifizieren, dass GitHub und GitLab Releases identisch sind:
+
+[source,bash]
+----
+# Checksummen von beiden Forges herunterladen
+gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
+glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
+
+# Vergleichen
+diff github/SHA256SUMS gitlab/SHA256SUMS && echo "Releases sind identisch"
+----
+
+=== Testen
+
+==== Unit Tests
+
+[source,bash]
+----
+go test -v ./...
+----
+
+==== XML Abrufen
+
+Service-Deskriptoren ohne Authentifizierung abrufen:
+
+[source,bash]
+----
+./fritz-mcp --fetch-xml
+----
+
+Dies lädt Service-Deskriptoren in das `xml/` Verzeichnis für Offline-Analyse herunter.
+
+=== Projektstruktur
+
+[source]
+----
+.
+├── main.go                # Haupt-MCP-Server Binary
+├── xml/                   # Gecachte Service-Deskriptoren
+├── dist/                  # Gebaute Binärdateien (erstellt durch make dist)
+├── config.go              # Konfigurationsladung
+├── tr064.go               # FRITZ!Box API Client Implementierung
+├── spec.go                # Service-Erkennung und Spec-Parsing
+├── mcp.go                 # MCP Server Implementierung
+├── docs.go                # Dokumentationsindex
+└── Makefile               # Build-Targets
+----
+
+=== Entwicklungs-Workflow
+
+1. Änderungen am Quellcode vornehmen
+2. Tests ausführen: `go test -v ./...`
+3. Bauen: `make build`
+4. Lokal mit deiner FRITZ!Box testen
+5. Verteilbare Binärdateien bauen: `make dist`
+
+=== Release-Prozess
+
+Releases werden automatisch im öffentlichen Repository veröffentlicht wenn ein Versions-Tag gepusht wird.
+
+==== Setup
+
+Das `PUBLIC_REPO_TOKEN` Secret ist konfiguriert und bereit für Releases.
+
+==== Ein Release erstellen
+
+[source,bash]
+----
+# Sicherstellen dass alle Tests bestehen
+make check
+
+# Das Release taggen (verwende semantische Versionierung)
+git tag v1.0.0
+
+# Den Tag pushen um den Release-Workflow auszulösen
+git push origin v1.0.0
+----
+
+Die GitHub Actions Workflows werden:
+
+Release Workflow (link:.github/workflows/release.yml[release.yml]):
+1. Binärdateien für alle Plattformen bauen (Linux, macOS, Windows, WASI)
+2. SHA256 Checksummen generieren
+3. Ein Release in https://github.com/kambriso/fritzbox-mcp-server erstellen
+4. Alle Binärdateien und Checksummen hochladen
+
+Container Workflow (link:.github/workflows/container.yml[container.yml]):
+1. WASI Container-Image bauen (getaggt mit `-wasi` Suffix)
+2. Multi-Arch Container bauen (linux/amd64, linux/arm64)
+3. Zu ghcr.io/kambriso/fritzbox-mcp-server veröffentlichen
+
+NOTE: Verwende den Multi-Arch Container für Produktion. Der WASI Container demonstriert Portabilität aber Go's wasip1-Target hat keine Netzwerk-Unterstützung (bis wasip2 Unterstützung in zukünftigen Go-Versionen).
+
+==== Unterstützte Release-Plattformen
+
+Binärdateien::
+* Linux: amd64, arm64, 386, arm
+* macOS: amd64 (Intel), arm64 (Apple Silicon)
+* Windows: amd64, arm64
+* WASI: wasm (Go wasip1 - keine Netzwerk-Unterstützung bis wasip2)
+
+Container Images::
+* Multi-arch: linux/amd64, linux/arm64 (empfohlen für Produktion)
+* WASI: wasm (Portabilitäts-Demo - Go wasip1 fehlen Netzwerk-APIs)
 
 == Support
 
@@ -424,3 +647,7 @@ Beiträge sind willkommen. Mit dem Einreichen eines Pull Requests stimmst du der
 ====
 Diese Software wird wie besehen bereitgestellt. Sichere deine FRITZ!Box mit einem starken Passwort und stelle sicher, dass sie nicht dem Internet ausgesetzt ist.
 ====
+
+'''
+
+FRITZ!Box ist eine eingetragene Marke der FRITZ! GmbH (ehemals AVM GmbH). Dieses Projekt ist nicht mit FRITZ! GmbH verbunden, wird nicht von FRITZ! GmbH unterstützt oder gesponsert.
