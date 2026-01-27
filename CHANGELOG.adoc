@@ -2,7 +2,7 @@
 
 All notable changes to the FRITZ!Box MCP Server project will be documented in this file.
 
-== link:https://github.com/jhinrichsen/fritzbox-mcp-server/releases/tag/v0.7.0[0.7.0] - 2026-01-26
+== link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.7.0[0.7.0] - 2026-01-26
 
 === Added
 - SLSA Level 3 provenance for GitHub releases
@@ -15,18 +15,18 @@ All notable changes to the FRITZ!Box MCP Server project will be documented in th
 - Version strings now follow semver (0.7.0 instead of v0.7.0)
 - Separate TAG and VERSION variables in Makefile
 
-== link:https://github.com/jhinrichsen/fritzbox-mcp-server/releases/tag/v0.6.1[0.6.1] - 2026-01-23
+== link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.6.1[0.6.1] - 2026-01-23
 
 === Changed
-- GitHub Actions release workflow for jhinrichsen repository
+- GitHub Actions release workflow for kambriso repository
 - Documented reproducible builds and toolchain requirements
 
-== link:https://github.com/jhinrichsen/fritzbox-mcp-server/releases/tag/v0.6.0[0.6.0] - 2025-12-23
+== link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.6.0[0.6.0] - 2025-12-23
 
 === Changed
 - Consistent executable naming
 
-== link:https://github.com/jhinrichsen/fritzbox-mcp-server/releases/tag/v0.5.0[0.5.0] - 2025-12-23
+== link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.5.0[0.5.0] - 2025-12-23
 
 === Fixed
 - Disabled automatic XML file caching on server startup

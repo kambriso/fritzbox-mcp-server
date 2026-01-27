@@ -9,12 +9,12 @@ link:README.adoc[🇬🇧 English Version] | link:COMPARISON.adoc[Vergleich mit 
 
 https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.shields.io/badge/Listed%20on-mcpservers.org-0066cc?style=for-the-badge&logo=anthropic[Listed on mcpservers.org]]
 
-https://github.com/jhinrichsen/fritzbox-mcp-server/actions/workflows/build.yml[image:https://github.com/jhinrichsen/fritzbox-mcp-server/actions/workflows/build.yml/badge.svg[Build]]
-https://github.com/jhinrichsen/fritzbox-mcp-server/releases/latest[image:https://img.shields.io/github/v/release/jhinrichsen/fritzbox-mcp-server[Release]]
-https://gitlab.com/jhinrichsen/fritzbox-mcp-server/-/pipelines[image:https://gitlab.com/jhinrichsen/fritzbox-mcp-server/badges/main/pipeline.svg[Pipeline]]
+https://github.com/kambriso/fritzbox-mcp-server/actions/workflows/build.yml[image:https://github.com/kambriso/fritzbox-mcp-server/actions/workflows/build.yml/badge.svg[Build]]
+https://github.com/kambriso/fritzbox-mcp-server/releases/latest[image:https://img.shields.io/github/v/release/kambriso/fritzbox-mcp-server[Release]]
+https://gitlab.com/kambriso/fritzbox-mcp-server/-/pipelines[image:https://gitlab.com/kambriso/fritzbox-mcp-server/badges/main/pipeline.svg[Pipeline]]
 image:https://img.shields.io/badge/SLSA-Level%203-green[SLSA Level 3]
-image:https://img.shields.io/github/license/jhinrichsen/fritzbox-mcp-server[License]
-image:https://img.shields.io/github/go-mod/go-version/jhinrichsen/fritzbox-mcp-server[Go Version]
+image:https://img.shields.io/github/license/kambriso/fritzbox-mcp-server[License]
+image:https://img.shields.io/github/go-mod/go-version/kambriso/fritzbox-mcp-server[Go Version]
 
 toc::[]
 
@@ -78,7 +78,7 @@ Installation anpassen:
 [source,bash]
 ----
 # Spezifische Version installieren
-FRITZBOX_MCP_VERSION=<tag> curl -fsSL https://raw.githubusercontent.com/jhinrichsen/fritzbox-mcp-server/main/install.sh | sh
+FRITZBOX_MCP_VERSION=<tag> curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
 
 # In benutzerdefiniertes Verzeichnis installieren
 FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/kambriso/fritzbox-mcp-server/main/install.sh | sh
@@ -330,7 +330,7 @@ Verifizierung:
 [source,bash]
 ----
 # Artefakte herunterladen (enthält SLSA-Metadaten)
-curl -L "https://gitlab.com/jhinrichsen/fritzbox-mcp-server/-/jobs/<JOB_ID>/artifacts/download" -o artifacts.zip
+curl -L "https://gitlab.com/kambriso/fritzbox-mcp-server/-/jobs/<JOB_ID>/artifacts/download" -o artifacts.zip
 
 # Provenienz extrahieren und prüfen
 unzip artifacts.zip artifacts-metadata.json
@@ -361,13 +361,13 @@ Verifizierung mit slsa-verifier:
 go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest
 
 # Binärdatei und Provenienz herunterladen
-gh release download <tag> -R jhinrichsen/fritzbox-mcp-server \
+gh release download <tag> -R kambriso/fritzbox-mcp-server \
   -p 'fritz-mcp-linux-amd64' -p '*.intoto.jsonl'
 
 # Provenienz verifizieren
 slsa-verifier verify-artifact fritz-mcp-linux-amd64 \
   --provenance-path multiple.intoto.jsonl \
-  --source-uri github.com/jhinrichsen/fritzbox-mcp-server \
+  --source-uri github.com/kambriso/fritzbox-mcp-server \
   --source-tag <tag>
 ----
 
@@ -422,8 +422,8 @@ curl -sL "https://github.com/.../SHA256SUMS" -o github-SHA256SUMS
 diff gitlab-SHA256SUMS github-SHA256SUMS && echo "Cross-Forge Verifizierung bestanden"
 
 # Oder mit CLI-Tools:
-gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
-glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
+gh release download <tag> -R kambriso/fritzbox-mcp-server -p 'SHA256SUMS' -D github
+glab release download <tag> -R kambriso/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
 diff github/SHA256SUMS gitlab/SHA256SUMS
 ----
 

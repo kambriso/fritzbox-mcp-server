@@ -311,8 +311,8 @@ deps: ## List dependencies
 
 # SLSA verification
 SLSA_TAG ?= $(VERSION)
-GITHUB_REPO ?= jhinrichsen/fritzbox-mcp-server
-GITLAB_REPO ?= jhinrichsen/fritzbox-mcp-server
+GITHUB_REPO ?= kambriso/fritzbox-mcp-server
+GITLAB_REPO ?= kambriso/fritzbox-mcp-server
 VERIFY_DIR ?= $(BUILD_DIR)/verify
 
 .PHONY: verify-slsa-github
