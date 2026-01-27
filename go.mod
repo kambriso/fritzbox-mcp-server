@@ -1,4 +1,4 @@
-module github.com/jhinrichsen/fritzbox-mcp-server
+module github.com/kambriso/fritzbox-mcp-server
 
 go 1.25
 
