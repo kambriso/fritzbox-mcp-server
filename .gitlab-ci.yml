@@ -1,6 +1,5 @@
 variables:
   RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/fritz-mcp/${CI_COMMIT_TAG}"
 
 test:
   image: golang:1.25
@@ -22,38 +21,37 @@ build:
   script:
     - VERSION=${CI_COMMIT_TAG#v}
     - echo "VERSION=$VERSION" >> build.env
+    - echo "BUILD_JOB_ID=$CI_JOB_ID" >> build.env
     - make dists
-    # Generate checksums
-    - (cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; | sed 's|  ./|  |' > ../SHA256SUMS)
+    # Flatten binaries for release
+    - mkdir -p release
+    - cp build/linux/amd64/fritz-mcp release/fritz-mcp-linux-amd64
+    - cp build/linux/arm64/fritz-mcp release/fritz-mcp-linux-arm64
+    - cp build/linux/arm/fritz-mcp release/fritz-mcp-linux-arm
+    - cp build/linux/386/fritz-mcp release/fritz-mcp-linux-386
+    - cp build/darwin/amd64/fritz-mcp release/fritz-mcp-darwin-amd64
+    - cp build/darwin/arm64/fritz-mcp release/fritz-mcp-darwin-arm64
+    - cp build/windows/amd64/fritz-mcp.exe release/fritz-mcp-windows-amd64.exe
+    - cp build/windows/arm64/fritz-mcp.exe release/fritz-mcp-windows-arm64.exe
+    - cp build/wasi/wasm/fritz-mcp.wasm release/fritz-mcp-wasi.wasm
+    - (cd release && sha256sum fritz-mcp-* > SHA256SUMS)
     # Install cosign for signing
     - apt-get update && apt-get install -y curl
     - curl -sSL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o /usr/local/bin/cosign
     - chmod +x /usr/local/bin/cosign
     # Sign each binary with keyless signing (OIDC)
     - |
-      for f in $(find build -type f -name 'fritz-mcp*'); do
+      for f in release/fritz-mcp-*; do
         cosign sign-blob --yes \
           --oidc-issuer=https://gitlab.com \
           --output-signature="${f}.sig" \
           --output-certificate="${f}.pem" \
           "$f"
       done
-    # Upload binaries to Package Registry
-    - |
-      upload() {
-        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "$1" "${PACKAGE_REGISTRY_URL}/$2"
-      }
-      upload build/linux/amd64/fritz-mcp fritz-mcp-linux-amd64
-      upload build/linux/arm64/fritz-mcp fritz-mcp-linux-arm64
-      upload build/linux/arm/fritz-mcp fritz-mcp-linux-arm
-      upload build/linux/386/fritz-mcp fritz-mcp-linux-386
-      upload build/darwin/amd64/fritz-mcp fritz-mcp-darwin-amd64
-      upload build/darwin/arm64/fritz-mcp fritz-mcp-darwin-arm64
-      upload build/windows/amd64/fritz-mcp.exe fritz-mcp-windows-amd64.exe
-      upload build/windows/arm64/fritz-mcp.exe fritz-mcp-windows-arm64.exe
-      upload build/wasi/wasm/fritz-mcp.wasm fritz-mcp-wasi.wasm
-      upload SHA256SUMS SHA256SUMS
   artifacts:
+    expire_in: never
+    paths:
+      - release/
     reports:
       dotenv: build.env
 
@@ -73,22 +71,32 @@ release:
     assets:
       links:
         - name: fritz-mcp-linux-amd64
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-amd64
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-linux-amd64"
+          filepath: /fritz-mcp-linux-amd64
         - name: fritz-mcp-linux-arm64
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm64
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-linux-arm64"
+          filepath: /fritz-mcp-linux-arm64
         - name: fritz-mcp-linux-arm
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-linux-arm"
+          filepath: /fritz-mcp-linux-arm
         - name: fritz-mcp-linux-386
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-386
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-linux-386"
+          filepath: /fritz-mcp-linux-386
         - name: fritz-mcp-darwin-amd64
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-amd64
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-darwin-amd64"
+          filepath: /fritz-mcp-darwin-amd64
         - name: fritz-mcp-darwin-arm64
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-arm64
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-darwin-arm64"
+          filepath: /fritz-mcp-darwin-arm64
         - name: fritz-mcp-windows-amd64.exe
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-amd64.exe
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-windows-amd64.exe"
+          filepath: /fritz-mcp-windows-amd64.exe
         - name: fritz-mcp-windows-arm64.exe
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-arm64.exe
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-windows-arm64.exe"
+          filepath: /fritz-mcp-windows-arm64.exe
         - name: fritz-mcp-wasi.wasm
-          url: ${PACKAGE_REGISTRY_URL}/fritz-mcp-wasi.wasm
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/fritz-mcp-wasi.wasm"
+          filepath: /fritz-mcp-wasi.wasm
         - name: SHA256SUMS
-          url: ${PACKAGE_REGISTRY_URL}/SHA256SUMS
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/SHA256SUMS"
+          filepath: /SHA256SUMS
