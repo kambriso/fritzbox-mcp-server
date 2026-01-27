@@ -17,6 +17,8 @@ release:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
+    - VERSION=${CI_COMMIT_TAG#v}
+    - echo "VERSION=$VERSION" >> release.env
     - make dists
     - cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS
     # Install cosign
@@ -36,7 +38,9 @@ release:
     paths:
       - build/
       - SHA256SUMS
+    reports:
+      dotenv: release.env
   release:
     tag_name: $CI_COMMIT_TAG
-    name: "${CI_COMMIT_TAG#v}"
-    description: "Release ${CI_COMMIT_TAG#v}"
+    name: $VERSION
+    description: Release $VERSION
