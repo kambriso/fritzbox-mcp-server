@@ -412,11 +412,13 @@ Source Code:: https://github.com/kambriso/fritz-mcp (privat)
 
 == Lizenz
 
-Copyright (c) 2025 Kambrium Software GmbH. Alle Rechte vorbehalten.
+Source-available. Kostenlos für genau ein FRITZ!Box-Zugangsdatenpaar. Alles andere erfordert eine kommerzielle Lizenz.
 
-Kostenlos für private Nutzung (einzelne FRITZ!Box). Kommerzielle Nutzung erfordert Lizenzierung.
+Siehe link:LICENSE.txt[LICENSE.txt] für vollständige Bedingungen.
 
-Siehe LICENSE Datei für vollständige Bedingungen.
+== Beitragen
+
+Beiträge sind willkommen. Mit dem Einreichen eines Pull Requests stimmst du der link:CONTRIBUTING.adoc[Contributor License Agreement] zu.
 
 [CAUTION]
 ====

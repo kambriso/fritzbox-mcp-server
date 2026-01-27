@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: LicenseRef-KSAL-1.0
+
 package main
 
 import (

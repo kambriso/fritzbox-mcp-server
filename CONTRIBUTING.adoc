@@ -1,0 +1,15 @@
+= Contributor License Agreement
+
+By submitting a pull request or other contribution to this repository, you agree to the following terms:
+
+1. You grant Kambrium Software GmbH a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, reproduce, modify, sublicense, and distribute your contribution as part of this Software.
+
+2. You represent that you have the legal right to grant this license.
+
+3. You understand that your contribution may be included in commercial offerings of this Software.
+
+4. You acknowledge that Kambrium Software GmbH retains all rights to relicense the Software, including your contribution, under different terms.
+
+5. This agreement does not grant you any ownership rights in the Software.
+
+For questions, contact licensing@kambrium.dev.

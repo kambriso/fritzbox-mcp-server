@@ -930,11 +930,13 @@ Source Code:: https://github.com/kambriso/fritz-mcp (private)
 
 == License
 
-Copyright (c) 2025 Kambrium Software GmbH. All Rights Reserved.
+Source-available. Free for exactly one FRITZ!Box credential pair. Anything else requires a commercial license.
 
-Free for personal use (single FRITZ!Box). Commercial use requires licensing.
+See link:LICENSE.txt[LICENSE.txt] for complete terms.
 
-See LICENSE file for complete terms.
+== Contributing
+
+Contributions are welcome. By submitting a pull request, you agree to the link:CONTRIBUTING.adoc[Contributor License Agreement].
 
 [CAUTION]
 ====

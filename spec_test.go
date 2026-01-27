@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: LicenseRef-KSAL-1.0
+
 package main
 
 import (
@@ -5,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
 )
 
 // TestFetchAllXML tests downloading all XML descriptors from a FRITZ!Box
