@@ -555,22 +555,6 @@ Fetch service descriptors without authentication:
 
 This downloads service descriptors to `xml/` directory for offline analysis.
 
-=== Project Structure
-
-[source]
-----
-.
-├── main.go                # Main MCP server binary
-├── xml/                   # Cached service descriptors
-├── dist/                  # Built binaries (created by make dist)
-├── config.go              # Configuration loading
-├── tr064.go               # FRITZ!Box API client implementation
-├── spec.go                # Service discovery and spec parsing
-├── mcp.go                 # MCP server implementation
-├── docs.go                # Documentation index
-└── Makefile               # Build targets
-----
-
 === Development Workflow
 
 1. Make changes to source code
@@ -603,16 +587,16 @@ git push origin v1.0.0
 
 The GitHub Actions workflows will:
 
-Release workflow (link:.github/workflows/release.yml[release.yml]):
-1. Build binaries for all platforms (Linux, macOS, Windows, WASI)
-2. Generate SHA256 checksums
-3. Create a release in https://github.com/kambriso/fritzbox-mcp-server
-4. Upload all binaries and checksums
+Release workflow (link:.github/workflows/release.yml[release.yml])::
+. Build binaries for all platforms (Linux, macOS, Windows, WASI)
+. Generate SHA256 checksums
+. Create a release in https://github.com/kambriso/fritzbox-mcp-server
+. Upload all binaries and checksums
 
-Container workflow (link:.github/workflows/container.yml[container.yml]):
-1. Build WASI container image (tagged with `-wasi` suffix)
-2. Build multi-arch container (linux/amd64, linux/arm64)
-3. Publish to ghcr.io/kambriso/fritzbox-mcp-server
+Container workflow (link:.github/workflows/container.yml[container.yml])::
+. Build WASI container image (tagged with `-wasi` suffix)
+. Build multi-arch container (linux/amd64, linux/arm64)
+. Publish to ghcr.io/kambriso/fritzbox-mcp-server
 
 NOTE: Use the multi-arch container for production. The WASI container demonstrates portability but Go's wasip1 target lacks network support (pending wasip2 support in future Go versions).
 

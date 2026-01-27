@@ -555,22 +555,6 @@ Service-Deskriptoren ohne Authentifizierung abrufen:
 
 Dies lädt Service-Deskriptoren in das `xml/` Verzeichnis für Offline-Analyse herunter.
 
-=== Projektstruktur
-
-[source]
-----
-.
-├── main.go                # Haupt-MCP-Server Binary
-├── xml/                   # Gecachte Service-Deskriptoren
-├── dist/                  # Gebaute Binärdateien (erstellt durch make dist)
-├── config.go              # Konfigurationsladung
-├── tr064.go               # FRITZ!Box API Client Implementierung
-├── spec.go                # Service-Erkennung und Spec-Parsing
-├── mcp.go                 # MCP Server Implementierung
-├── docs.go                # Dokumentationsindex
-└── Makefile               # Build-Targets
-----
-
 === Entwicklungs-Workflow
 
 1. Änderungen am Quellcode vornehmen
@@ -603,16 +587,16 @@ git push origin v1.0.0
 
 Die GitHub Actions Workflows werden:
 
-Release Workflow (link:.github/workflows/release.yml[release.yml]):
-1. Binärdateien für alle Plattformen bauen (Linux, macOS, Windows, WASI)
-2. SHA256 Checksummen generieren
-3. Ein Release in https://github.com/kambriso/fritzbox-mcp-server erstellen
-4. Alle Binärdateien und Checksummen hochladen
+Release Workflow (link:.github/workflows/release.yml[release.yml])::
+. Binärdateien für alle Plattformen bauen (Linux, macOS, Windows, WASI)
+. SHA256 Checksummen generieren
+. Ein Release in https://github.com/kambriso/fritzbox-mcp-server erstellen
+. Alle Binärdateien und Checksummen hochladen
 
-Container Workflow (link:.github/workflows/container.yml[container.yml]):
-1. WASI Container-Image bauen (getaggt mit `-wasi` Suffix)
-2. Multi-Arch Container bauen (linux/amd64, linux/arm64)
-3. Zu ghcr.io/kambriso/fritzbox-mcp-server veröffentlichen
+Container Workflow (link:.github/workflows/container.yml[container.yml])::
+. WASI Container-Image bauen (getaggt mit `-wasi` Suffix)
+. Multi-Arch Container bauen (linux/amd64, linux/arm64)
+. Zu ghcr.io/kambriso/fritzbox-mcp-server veröffentlichen
 
 NOTE: Verwende den Multi-Arch Container für Produktion. Der WASI Container demonstriert Portabilität aber Go's wasip1-Target hat keine Netzwerk-Unterstützung (bis wasip2 Unterstützung in zukünftigen Go-Versionen).
 
