@@ -1,5 +1,6 @@
 variables:
   RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/fritz-mcp/${CI_COMMIT_TAG}"
 
 test:
   image: golang:1.25
@@ -24,7 +25,7 @@ build:
     - make dists
     - (cd build && find . -type f -name 'fritz-mcp*' -exec sha256sum {} \; > ../SHA256SUMS)
     # Install cosign for signing
-    - apt-get update && apt-get install -y curl
+    - apt-get update && apt-get install -y curl zip
     - curl -sSL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o /usr/local/bin/cosign
     - chmod +x /usr/local/bin/cosign
     # Sign each binary with keyless signing (OIDC)
@@ -36,10 +37,43 @@ build:
           --output-certificate="${f}.pem" \
           "$f"
       done
+    # Create platform archives
+    - |
+      cd build
+      for os in linux darwin windows; do
+        for arch in $(ls $os 2>/dev/null); do
+          if [ "$os" = "windows" ]; then
+            zip -j ../fritz-mcp-${VERSION}-${os}-${arch}.zip ${os}/${arch}/*
+          else
+            tar -czf ../fritz-mcp-${VERSION}-${os}-${arch}.tar.gz -C ${os}/${arch} .
+          fi
+        done
+      done
+      # WASI/WASM
+      if [ -d wasi ]; then
+        tar -czf ../fritz-mcp-${VERSION}-wasi-wasm.tar.gz -C wasi/wasm .
+      fi
+      cd ..
+    # Upload to Package Registry
+    - |
+      for f in fritz-mcp-*.tar.gz fritz-mcp-*.zip SHA256SUMS; do
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+             --upload-file "$f" \
+             "${PACKAGE_REGISTRY_URL}/${f}"
+      done
+    # Save asset URLs for release job
+    - |
+      echo "LINUX_AMD64_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-linux-amd64.tar.gz" >> build.env
+      echo "LINUX_ARM64_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-linux-arm64.tar.gz" >> build.env
+      echo "LINUX_ARM_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-linux-arm.tar.gz" >> build.env
+      echo "LINUX_386_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-linux-386.tar.gz" >> build.env
+      echo "DARWIN_AMD64_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-darwin-amd64.tar.gz" >> build.env
+      echo "DARWIN_ARM64_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-darwin-arm64.tar.gz" >> build.env
+      echo "WINDOWS_AMD64_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-windows-amd64.zip" >> build.env
+      echo "WINDOWS_ARM64_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-windows-arm64.zip" >> build.env
+      echo "WASI_WASM_URL=${PACKAGE_REGISTRY_URL}/fritz-mcp-${VERSION}-wasi-wasm.tar.gz" >> build.env
+      echo "SHA256SUMS_URL=${PACKAGE_REGISTRY_URL}/SHA256SUMS" >> build.env
   artifacts:
-    paths:
-      - build/
-      - SHA256SUMS
     reports:
       dotenv: build.env
 
@@ -58,5 +92,23 @@ release:
     description: Release $VERSION
     assets:
       links:
+        - name: fritz-mcp-${VERSION}-linux-amd64.tar.gz
+          url: $LINUX_AMD64_URL
+        - name: fritz-mcp-${VERSION}-linux-arm64.tar.gz
+          url: $LINUX_ARM64_URL
+        - name: fritz-mcp-${VERSION}-linux-arm.tar.gz
+          url: $LINUX_ARM_URL
+        - name: fritz-mcp-${VERSION}-linux-386.tar.gz
+          url: $LINUX_386_URL
+        - name: fritz-mcp-${VERSION}-darwin-amd64.tar.gz
+          url: $DARWIN_AMD64_URL
+        - name: fritz-mcp-${VERSION}-darwin-arm64.tar.gz
+          url: $DARWIN_ARM64_URL
+        - name: fritz-mcp-${VERSION}-windows-amd64.zip
+          url: $WINDOWS_AMD64_URL
+        - name: fritz-mcp-${VERSION}-windows-arm64.zip
+          url: $WINDOWS_ARM64_URL
+        - name: fritz-mcp-${VERSION}-wasi-wasm.tar.gz
+          url: $WASI_WASM_URL
         - name: SHA256SUMS
-          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/SHA256SUMS"
+          url: $SHA256SUMS_URL
