@@ -406,6 +406,34 @@ sha256sum -c SHA256SUMS
 # Full trust chain: source code -> CI build -> signed artifact -> your machine
 ----
 
+==== Cross-Git-Forge Verification
+
+This project publishes identical releases on both GitLab and GitHub. Cross-forge verification proves that neither forge has been compromised - if an attacker modified binaries on one forge, the checksums would not match.
+
+This is independent of SLSA: while SLSA proves "this binary came from this source", cross-forge verification proves "both forges serve the same binary".
+
+[source,bash]
+----
+# Download checksums from both forges
+curl -sL "https://gitlab.com/.../SHA256SUMS" -o gitlab-SHA256SUMS
+curl -sL "https://github.com/.../SHA256SUMS" -o github-SHA256SUMS
+
+# Compare - must be identical
+diff gitlab-SHA256SUMS github-SHA256SUMS && echo "Cross-forge verification passed"
+
+# Or using CLI tools:
+gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
+glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
+diff github/SHA256SUMS gitlab/SHA256SUMS
+----
+
+Why this matters:
+
+* Protects against single-forge compromise
+* Validates reproducible builds work correctly
+* No trust in any single platform required
+* Users can verify with standard tools (curl, diff, sha256sum)
+
 === Token Usage Considerations
 
 This MCP server exposes 143 tools to the AI assistant. Each tool definition (name, description, JSON schema) is sent with every message.
@@ -614,20 +642,6 @@ The gitlab:1.25 Docker image matches the upstream Go distribution, ensuring repr
 Both GitLab CI and GitHub Actions use the official Go 1.25 toolchain: GitLab via the golang:1.25 container image, GitHub via actions/setup-go which downloads from go.dev. Both produce byte-for-byte identical binaries. Local builds using distribution-provided Go packages (Fedora, Ubuntu, etc.) may produce different binaries due to distro-specific patches.
 
 For byte-for-byte reproducible local builds, use `make dists-container` which builds in the golang:1.25 container.
-
-===== Cross-Forge Verification
-
-To verify that GitHub and GitLab releases are identical:
-
-[source,bash]
-----
-# Download checksums from both forges
-gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
-glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
-
-# Compare
-diff github/SHA256SUMS gitlab/SHA256SUMS && echo "Releases are identical"
-----
 
 === Testing
 

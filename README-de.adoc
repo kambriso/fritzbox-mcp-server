@@ -406,6 +406,34 @@ sha256sum -c SHA256SUMS
 # Vollständige Vertrauenskette: Quellcode -> CI-Build -> signiertes Artefakt -> Ihr Rechner
 ----
 
+==== Cross-Git-Forge Verifizierung
+
+Dieses Projekt veröffentlicht identische Releases auf GitLab und GitHub. Cross-Forge-Verifizierung beweist, dass keine der Forges kompromittiert wurde - wenn ein Angreifer Binärdateien auf einer Forge modifiziert hätte, würden die Prüfsummen nicht übereinstimmen.
+
+Dies ist unabhängig von SLSA: Während SLSA beweist "diese Binärdatei stammt aus diesem Quellcode", beweist Cross-Forge-Verifizierung "beide Forges liefern dieselbe Binärdatei".
+
+[source,bash]
+----
+# Prüfsummen von beiden Forges herunterladen
+curl -sL "https://gitlab.com/.../SHA256SUMS" -o gitlab-SHA256SUMS
+curl -sL "https://github.com/.../SHA256SUMS" -o github-SHA256SUMS
+
+# Vergleichen - muss identisch sein
+diff gitlab-SHA256SUMS github-SHA256SUMS && echo "Cross-Forge Verifizierung bestanden"
+
+# Oder mit CLI-Tools:
+gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
+glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
+diff github/SHA256SUMS gitlab/SHA256SUMS
+----
+
+Warum das wichtig ist:
+
+* Schützt vor Kompromittierung einer einzelnen Forge
+* Validiert, dass reproduzierbare Builds korrekt funktionieren
+* Kein Vertrauen in eine einzelne Plattform erforderlich
+* Benutzer können mit Standard-Tools verifizieren (curl, diff, sha256sum)
+
 === Token-Nutzung Hinweise
 
 Dieser MCP-Server stellt 143 Tools für den KI-Assistenten bereit. Jede Tool-Definition (Name, Beschreibung, JSON-Schema) wird mit jeder Nachricht gesendet.
@@ -614,20 +642,6 @@ Das golang:1.25 Docker-Image entspricht der Upstream Go Distribution und gewähr
 Sowohl GitLab CI als auch GitHub Actions verwenden die offizielle Go 1.25 Toolchain: GitLab über das golang:1.25 Container-Image, GitHub über actions/setup-go das von go.dev herunterlädt. Beide erzeugen byte-für-byte identische Binärdateien. Lokale Builds mit distributions-bereitgestellten Go-Paketen (Fedora, Ubuntu, etc.) können unterschiedliche Binärdateien erzeugen aufgrund distro-spezifischer Patches.
 
 Für byte-für-byte reproduzierbare lokale Builds verwende `make dists-container` das im golang:1.25 Container baut.
-
-===== Cross-Forge Verifizierung
-
-Um zu verifizieren, dass GitHub und GitLab Releases identisch sind:
-
-[source,bash]
-----
-# Checksummen von beiden Forges herunterladen
-gh release download <tag> -R jhinrichsen/fritzbox-mcp-server -p 'SHA256SUMS' -D github
-glab release download <tag> -R jhinrichsen/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
-
-# Vergleichen
-diff github/SHA256SUMS gitlab/SHA256SUMS && echo "Releases sind identisch"
-----
 
 === Testen
 
