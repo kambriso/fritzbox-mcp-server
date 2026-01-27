@@ -312,6 +312,100 @@ Unabhängige VirusTotal-Scans bestätigen, dass die Binärdateien sauber sind:
 * https://www.virustotal.com/gui/file/65fb7ccad5d7e83210a788d1fc3e4b9a69c1dbaee2af81ada82fdb0474c26e36[darwin-arm64]
 * https://www.virustotal.com/gui/file/c4b0d05b2a4d60bb34d149974779d7115d31f4568dadd4843e6c5b3e275c5c17[windows-amd64]
 
+==== Supply-Chain-Sicherheit (SLSA)
+
+Dieses Projekt stellt https://slsa.dev[SLSA]-Provenienz (Supply chain Levels for Software Artifacts) für alle Release-Binärdateien bereit. SLSA-Provenienz attestiert kryptographisch, dass Binärdateien aus spezifischem Quellcode von einem vertrauenswürdigen Builder erstellt wurden.
+
+Zwei unabhängige Nachweise sind verfügbar:
+
+1. SHA256SUMS - Forge-übergreifende Reproduzierbarkeit (gleicher Quellcode erzeugt identische Binärdateien auf GitLab und GitHub)
+2. SLSA-Provenienz - Supply-Chain-Attestierung (beweist Binär-Herkunft und Build-Prozess)
+
+===== GitLab (SLSA Level 2)
+
+GitLab-Releases enthalten SLSA Level 2 Provenienz via `artifacts-metadata.json` in den Job-Artefakten.
+
+Verifizierung:
+
+[source,bash]
+----
+# Artefakte herunterladen (enthält SLSA-Metadaten)
+curl -L "https://gitlab.com/jhinrichsen/fritzbox-mcp-server/-/jobs/<JOB_ID>/artifacts/download" -o artifacts.zip
+
+# Provenienz extrahieren und prüfen
+unzip artifacts.zip artifacts-metadata.json
+cat artifacts-metadata.json | jq '.predicateType'
+# Ausgabe: "https://slsa.dev/provenance/v1"
+
+# Artefakt-Digest verifizieren
+sha256sum release/fritz-mcp-linux-amd64
+# Mit Digest in artifacts-metadata.json subjects vergleichen
+----
+
+Die Provenienz enthält:
+
+* In-toto Statement-Format (`https://in-toto.io/Statement/v0.1`)
+* SLSA v1 Prädikat mit Build-Definition
+* SHA256-Digests für alle Artefakte
+* GitLab CI Umgebungsparameter
+
+===== GitHub (SLSA Level 3)
+
+GitHub-Releases enthalten SLSA Level 3 Provenienz via https://github.com/slsa-framework/slsa-github-generator[slsa-github-generator].
+
+Verifizierung mit slsa-verifier:
+
+[source,bash]
+----
+# slsa-verifier installieren
+go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest
+
+# Binärdatei und Provenienz herunterladen
+gh release download <tag> -R jhinrichsen/fritzbox-mcp-server \
+  -p 'fritz-mcp-linux-amd64' -p '*.intoto.jsonl'
+
+# Provenienz verifizieren
+slsa-verifier verify-artifact fritz-mcp-linux-amd64 \
+  --provenance-path multiple.intoto.jsonl \
+  --source-uri github.com/jhinrichsen/fritzbox-mcp-server \
+  --source-tag <tag>
+----
+
+===== Cosign-Signatur-Verifizierung
+
+Alle Binärdateien sind mit https://docs.sigstore.dev/cosign/[Cosign] und schlüsselloser Signierung (OIDC) signiert. Signaturen und Zertifikate sind in den Release-Artefakten enthalten.
+
+[source,bash]
+----
+# Binärdatei, Signatur und Zertifikat herunterladen
+# (von GitLab-Artefakten oder GitHub-Release)
+
+# Signatur verifizieren
+cosign verify-blob \
+  --signature fritz-mcp-linux-amd64.sig \
+  --certificate fritz-mcp-linux-amd64.pem \
+  --certificate-oidc-issuer https://gitlab.com \
+  fritz-mcp-linux-amd64
+----
+
+===== Unabhängige Verifizierung
+
+Alle Verifizierungen können offline mit Standard-Tools durchgeführt werden:
+
+[source,bash]
+----
+# 1. Prüfsummen zwischen Forges vergleichen
+diff <(curl -sL gitlab-SHA256SUMS) <(curl -sL github-SHA256SUMS)
+
+# 2. Binärdatei gegen Prüfsumme verifizieren
+sha256sum -c SHA256SUMS
+
+# 3. SLSA-Provenienz verifizieren (slsa-verifier oder manuelle Prüfung)
+# 4. Cosign-Signatur verifizieren (benötigt Netzwerk für Zertifikatskette)
+
+# Vollständige Vertrauenskette: Quellcode -> CI-Build -> signiertes Artefakt -> Ihr Rechner
+----
+
 === Token-Nutzung Hinweise
 
 Dieser MCP-Server stellt 143 Tools für den KI-Assistenten bereit. Jede Tool-Definition (Name, Beschreibung, JSON-Schema) wird mit jeder Nachricht gesendet.

@@ -312,6 +312,100 @@ Independent VirusTotal scans confirm the binaries are clean:
 * https://www.virustotal.com/gui/file/65fb7ccad5d7e83210a788d1fc3e4b9a69c1dbaee2af81ada82fdb0474c26e36[darwin-arm64]
 * https://www.virustotal.com/gui/file/c4b0d05b2a4d60bb34d149974779d7115d31f4568dadd4843e6c5b3e275c5c17[windows-amd64]
 
+==== Supply Chain Security (SLSA)
+
+This project provides https://slsa.dev[SLSA] (Supply chain Levels for Software Artifacts) provenance for all release binaries. SLSA provenance cryptographically attests that binaries were built from specific source code by a trusted builder.
+
+Two independent proofs are available:
+
+1. SHA256SUMS - Cross-forge reproducibility (same source produces identical binaries on GitLab and GitHub)
+2. SLSA provenance - Supply chain attestation (proves binary origin and build process)
+
+===== GitLab (SLSA Level 2)
+
+GitLab releases include SLSA Level 2 provenance via `artifacts-metadata.json` in the job artifacts.
+
+Verification:
+
+[source,bash]
+----
+# Download artifacts (includes SLSA metadata)
+curl -L "https://gitlab.com/jhinrichsen/fritzbox-mcp-server/-/jobs/<JOB_ID>/artifacts/download" -o artifacts.zip
+
+# Extract and examine provenance
+unzip artifacts.zip artifacts-metadata.json
+cat artifacts-metadata.json | jq '.predicateType'
+# Output: "https://slsa.dev/provenance/v1"
+
+# Verify artifact digest matches
+sha256sum release/fritz-mcp-linux-amd64
+# Compare with digest in artifacts-metadata.json subjects
+----
+
+The provenance includes:
+
+* In-toto statement format (`https://in-toto.io/Statement/v0.1`)
+* SLSA v1 predicate with build definition
+* SHA256 digests for all artifacts
+* GitLab CI environment parameters
+
+===== GitHub (SLSA Level 3)
+
+GitHub releases include SLSA Level 3 provenance via the https://github.com/slsa-framework/slsa-github-generator[slsa-github-generator].
+
+Verification using slsa-verifier:
+
+[source,bash]
+----
+# Install slsa-verifier
+go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest
+
+# Download binary and provenance
+gh release download <tag> -R jhinrichsen/fritzbox-mcp-server \
+  -p 'fritz-mcp-linux-amd64' -p '*.intoto.jsonl'
+
+# Verify provenance
+slsa-verifier verify-artifact fritz-mcp-linux-amd64 \
+  --provenance-path multiple.intoto.jsonl \
+  --source-uri github.com/jhinrichsen/fritzbox-mcp-server \
+  --source-tag <tag>
+----
+
+===== Cosign Signature Verification
+
+All binaries are signed using https://docs.sigstore.dev/cosign/[Cosign] with keyless signing (OIDC). Signatures and certificates are included in the release artifacts.
+
+[source,bash]
+----
+# Download binary, signature, and certificate
+# (from GitLab artifacts or GitHub release)
+
+# Verify signature
+cosign verify-blob \
+  --signature fritz-mcp-linux-amd64.sig \
+  --certificate fritz-mcp-linux-amd64.pem \
+  --certificate-oidc-issuer https://gitlab.com \
+  fritz-mcp-linux-amd64
+----
+
+===== Independent Verification
+
+All verification can be performed offline using standard tools:
+
+[source,bash]
+----
+# 1. Verify checksums match across forges
+diff <(curl -sL gitlab-SHA256SUMS) <(curl -sL github-SHA256SUMS)
+
+# 2. Verify binary matches checksum
+sha256sum -c SHA256SUMS
+
+# 3. Verify SLSA provenance (slsa-verifier or manual inspection)
+# 4. Verify cosign signature (requires network for certificate chain)
+
+# Full trust chain: source code -> CI build -> signed artifact -> your machine
+----
+
 === Token Usage Considerations
 
 This MCP server exposes 143 tools to the AI assistant. Each tool definition (name, description, JSON schema) is sent with every message.
