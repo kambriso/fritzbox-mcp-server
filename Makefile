@@ -21,7 +21,7 @@ GO_SOURCES = $(wildcard **/*.go)
 
 .PHONY: help
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-24s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-42s %s\n", $$1, $$2}'
 
 .PHONY: build
 build: ## Build the binary
@@ -307,7 +307,6 @@ deps: ## List dependencies
 	$(GO) list -m all
 
 # SLSA verification
-SLSA_TAG ?= $(VERSION)
 GITHUB_REPO ?= kambriso/fritzbox-mcp-server
 GITLAB_REPO ?= kambriso/fritzbox-mcp-server
 VERIFY_DIR ?= $(BUILD_DIR)/verify
@@ -315,7 +314,7 @@ VERIFY_DIR ?= $(BUILD_DIR)/verify
 # GitHub SLSA Level 3 verification (downloads binary + provenance, then verifies)
 define slsa-verify-github
 	mkdir -p $(VERIFY_DIR)/github
-	gh release download $(SLSA_TAG) -R $(GITHUB_REPO) -D $(VERIFY_DIR)/github --clobber \
+	gh release download $(TAG) -R $(GITHUB_REPO) -D $(VERIFY_DIR)/github --clobber \
 		-p '$(1)' -p 'multiple.intoto.jsonl'
 	go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest verify-artifact \
 		$(VERIFY_DIR)/github/$(1) \
@@ -360,12 +359,12 @@ verify-slsa-github-wasi: ## Verify GitHub wasi
 	$(call slsa-verify-github,fritz-mcp-wasi.wasm)
 
 .PHONY: verify-slsa-github
-verify-slsa-github: verify-slsa-github-linux-amd64 verify-slsa-github-linux-arm64 verify-slsa-github-linux-arm verify-slsa-github-linux-386 verify-slsa-github-darwin-amd64 verify-slsa-github-darwin-arm64 verify-slsa-github-windows-amd64 verify-slsa-github-windows-arm64 verify-slsa-github-wasi ## Verify GitHub SLSA Level 3 provenance (use SLSA_TAG=v0.x.x)
+verify-slsa-github: verify-slsa-github-linux-amd64 verify-slsa-github-linux-arm64 verify-slsa-github-linux-arm verify-slsa-github-linux-386 verify-slsa-github-darwin-amd64 verify-slsa-github-darwin-arm64 verify-slsa-github-windows-amd64 verify-slsa-github-windows-arm64 verify-slsa-github-wasi ## Verify GitHub SLSA Level 3 provenance (use TAG=v0.x.x)
 
 # GitLab SLSA Level 2 verification (downloads binary + sig + cert, then verifies)
 define slsa-verify-gitlab
 	mkdir -p $(VERIFY_DIR)/gitlab
-	glab release download $(SLSA_TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab \
+	glab release download $(TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab \
 		-n '$(1)' -n '$(1).sig' -n '$(1).pem'
 	go run github.com/sigstore/cosign/v2/cmd/cosign@latest verify-blob \
 		--signature $(VERIFY_DIR)/gitlab/$(1).sig \
@@ -412,7 +411,7 @@ verify-slsa-gitlab-wasi: ## Verify GitLab wasi
 	$(call slsa-verify-gitlab,fritz-mcp-wasi.wasm)
 
 .PHONY: verify-slsa-gitlab
-verify-slsa-gitlab: verify-slsa-gitlab-linux-amd64 verify-slsa-gitlab-linux-arm64 verify-slsa-gitlab-linux-arm verify-slsa-gitlab-linux-386 verify-slsa-gitlab-darwin-amd64 verify-slsa-gitlab-darwin-arm64 verify-slsa-gitlab-windows-amd64 verify-slsa-gitlab-windows-arm64 verify-slsa-gitlab-wasi ## Verify GitLab SLSA Level 2 signatures (use SLSA_TAG=v0.x.x)
+verify-slsa-gitlab: verify-slsa-gitlab-linux-amd64 verify-slsa-gitlab-linux-arm64 verify-slsa-gitlab-linux-arm verify-slsa-gitlab-linux-386 verify-slsa-gitlab-darwin-amd64 verify-slsa-gitlab-darwin-arm64 verify-slsa-gitlab-windows-amd64 verify-slsa-gitlab-windows-arm64 verify-slsa-gitlab-wasi ## Verify GitLab SLSA Level 2 signatures (use TAG=v0.x.x)
 
 .PHONY: verify-slsa
 verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify SLSA provenance on both forges
