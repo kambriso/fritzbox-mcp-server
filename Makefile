@@ -1,8 +1,8 @@
 .POSIX:
 
-TAG != git describe --tags --always --dirty
-VERSION != v=$$(git describe --tags --always --dirty); echo $${v\#v}
-COMMIT != git rev-parse --short HEAD
+TAG := $(shell git describe --tags --always --dirty)
+VERSION := $(shell git describe --tags --always --dirty | sed 's/^v//')
+COMMIT := $(shell git rev-parse --short HEAD)
 
 # Reproducible builds
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --format=%ct)
