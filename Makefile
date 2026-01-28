@@ -318,12 +318,13 @@ VERIFY_DIR ?= $(BUILD_DIR)/verify
 .PHONY: verify-slsa-github
 verify-slsa-github: ## Verify GitHub release SLSA provenance (use SLSA_TAG=v0.x.x)
 	@mkdir -p $(VERIFY_DIR)/github
-	gh release download $(SLSA_TAG) -R $(GITHUB_REPO) -D $(VERIFY_DIR)/github --clobber
+	gh release download $(SLSA_TAG) -R $(GITHUB_REPO) -D $(VERIFY_DIR)/github --clobber \
+		-p 'fritz-mcp-*' -p '*.intoto.jsonl' -p 'SHA256SUMS'
 	@echo "Verifying GitHub SLSA Level 3 provenance..."
 	@for f in $(VERIFY_DIR)/github/fritz-mcp-*; do \
 		[ -f "$$f" ] && [ "$${f##*.}" != "jsonl" ] && \
 		echo "  $$f" && \
-		slsa-verifier verify-artifact "$$f" \
+		go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest verify-artifact "$$f" \
 			--provenance-path $(VERIFY_DIR)/github/multiple.intoto.jsonl \
 			--source-uri github.com/$(GITHUB_REPO) || exit 1; \
 	done
@@ -332,12 +333,13 @@ verify-slsa-github: ## Verify GitHub release SLSA provenance (use SLSA_TAG=v0.x.
 .PHONY: verify-slsa-gitlab
 verify-slsa-gitlab: ## Verify GitLab release signatures (use SLSA_TAG=v0.x.x)
 	@mkdir -p $(VERIFY_DIR)/gitlab
-	glab release download $(SLSA_TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab
+	glab release download $(SLSA_TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab \
+		-n 'fritz-mcp-*' -n 'artifacts-metadata.json' -n 'SHA256SUMS'
 	@echo "Verifying GitLab SLSA Level 2 signatures..."
 	@for f in $(VERIFY_DIR)/gitlab/fritz-mcp-*; do \
 		[ -f "$$f" ] && [ "$${f##*.}" != "sig" ] && [ "$${f##*.}" != "pem" ] && \
 		echo "  $$f" && \
-		cosign verify-blob \
+		go run github.com/sigstore/cosign/v2/cmd/cosign@latest verify-blob \
 			--signature "$$f.sig" \
 			--certificate "$$f.pem" \
 			--certificate-identity-regexp '.*' \
