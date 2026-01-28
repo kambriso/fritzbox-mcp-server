@@ -1,5 +1,6 @@
 variables:
   RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/fritzbox-mcp-server/${CI_COMMIT_TAG}"
 
 test:
   image: golang:1.25
@@ -20,8 +21,6 @@ build:
       aud: sigstore
   script:
     - VERSION=${CI_COMMIT_TAG#v}
-    - echo "VERSION=$VERSION" >> build.env
-    - echo "BUILD_JOB_ID=$CI_JOB_ID" >> build.env
     - make dists
     # Flatten binaries for release
     - mkdir -p release
@@ -48,12 +47,23 @@ build:
           --output-certificate="${f}.pem" \
           "$f"
       done
+    # Upload all files to Generic Package Registry
+    - |
+      for f in release/*; do
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --upload-file "$f" \
+          "${PACKAGE_REGISTRY_URL}/$(basename $f)"
+      done
+    # Upload artifacts-metadata.json to Package Registry
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        --upload-file artifacts-metadata.json \
+        "${PACKAGE_REGISTRY_URL}/artifacts-metadata.json"
   artifacts:
-    expire_in: never
+    expire_in: 1 day
     paths:
       - release/
-    reports:
-      dotenv: build.env
+      - artifacts-metadata.json
 
 release:
   image: registry.gitlab.com/gitlab-org/cli:latest
@@ -61,99 +71,99 @@ release:
     - if: $CI_COMMIT_TAG
   needs:
     - job: build
-      artifacts: true
+      artifacts: false
   script:
-    - echo "Creating release $VERSION"
+    - echo "Creating release ${CI_COMMIT_TAG}"
   release:
     tag_name: $CI_COMMIT_TAG
-    name: $VERSION
-    description: Release $VERSION
+    name: ${CI_COMMIT_TAG#v}
+    description: Release ${CI_COMMIT_TAG#v}
     assets:
       links:
         - name: fritz-mcp-linux-amd64
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-amd64"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-amd64"
           filepath: /fritz-mcp-linux-amd64
         - name: fritz-mcp-linux-amd64.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-amd64.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-amd64.sig"
           filepath: /fritz-mcp-linux-amd64.sig
         - name: fritz-mcp-linux-amd64.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-amd64.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-amd64.pem"
           filepath: /fritz-mcp-linux-amd64.pem
         - name: fritz-mcp-linux-arm64
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-arm64"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm64"
           filepath: /fritz-mcp-linux-arm64
         - name: fritz-mcp-linux-arm64.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-arm64.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm64.sig"
           filepath: /fritz-mcp-linux-arm64.sig
         - name: fritz-mcp-linux-arm64.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-arm64.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm64.pem"
           filepath: /fritz-mcp-linux-arm64.pem
         - name: fritz-mcp-linux-arm
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-arm"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm"
           filepath: /fritz-mcp-linux-arm
         - name: fritz-mcp-linux-arm.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-arm.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm.sig"
           filepath: /fritz-mcp-linux-arm.sig
         - name: fritz-mcp-linux-arm.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-arm.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-arm.pem"
           filepath: /fritz-mcp-linux-arm.pem
         - name: fritz-mcp-linux-386
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-386"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-386"
           filepath: /fritz-mcp-linux-386
         - name: fritz-mcp-linux-386.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-386.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-386.sig"
           filepath: /fritz-mcp-linux-386.sig
         - name: fritz-mcp-linux-386.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-linux-386.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-linux-386.pem"
           filepath: /fritz-mcp-linux-386.pem
         - name: fritz-mcp-darwin-amd64
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-darwin-amd64"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-amd64"
           filepath: /fritz-mcp-darwin-amd64
         - name: fritz-mcp-darwin-amd64.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-darwin-amd64.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-amd64.sig"
           filepath: /fritz-mcp-darwin-amd64.sig
         - name: fritz-mcp-darwin-amd64.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-darwin-amd64.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-amd64.pem"
           filepath: /fritz-mcp-darwin-amd64.pem
         - name: fritz-mcp-darwin-arm64
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-darwin-arm64"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-arm64"
           filepath: /fritz-mcp-darwin-arm64
         - name: fritz-mcp-darwin-arm64.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-darwin-arm64.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-arm64.sig"
           filepath: /fritz-mcp-darwin-arm64.sig
         - name: fritz-mcp-darwin-arm64.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-darwin-arm64.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-darwin-arm64.pem"
           filepath: /fritz-mcp-darwin-arm64.pem
         - name: fritz-mcp-windows-amd64.exe
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-windows-amd64.exe"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-amd64.exe"
           filepath: /fritz-mcp-windows-amd64.exe
         - name: fritz-mcp-windows-amd64.exe.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-windows-amd64.exe.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-amd64.exe.sig"
           filepath: /fritz-mcp-windows-amd64.exe.sig
         - name: fritz-mcp-windows-amd64.exe.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-windows-amd64.exe.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-amd64.exe.pem"
           filepath: /fritz-mcp-windows-amd64.exe.pem
         - name: fritz-mcp-windows-arm64.exe
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-windows-arm64.exe"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-arm64.exe"
           filepath: /fritz-mcp-windows-arm64.exe
         - name: fritz-mcp-windows-arm64.exe.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-windows-arm64.exe.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-arm64.exe.sig"
           filepath: /fritz-mcp-windows-arm64.exe.sig
         - name: fritz-mcp-windows-arm64.exe.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-windows-arm64.exe.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-windows-arm64.exe.pem"
           filepath: /fritz-mcp-windows-arm64.exe.pem
         - name: fritz-mcp-wasi.wasm
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-wasi.wasm"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-wasi.wasm"
           filepath: /fritz-mcp-wasi.wasm
         - name: fritz-mcp-wasi.wasm.sig
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-wasi.wasm.sig"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-wasi.wasm.sig"
           filepath: /fritz-mcp-wasi.wasm.sig
         - name: fritz-mcp-wasi.wasm.pem
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/fritz-mcp-wasi.wasm.pem"
+          url: "${PACKAGE_REGISTRY_URL}/fritz-mcp-wasi.wasm.pem"
           filepath: /fritz-mcp-wasi.wasm.pem
         - name: SHA256SUMS
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/release/SHA256SUMS"
+          url: "${PACKAGE_REGISTRY_URL}/SHA256SUMS"
           filepath: /SHA256SUMS
         - name: artifacts-metadata.json
-          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/artifacts-metadata.json"
+          url: "${PACKAGE_REGISTRY_URL}/artifacts-metadata.json"
           filepath: /artifacts-metadata.json
