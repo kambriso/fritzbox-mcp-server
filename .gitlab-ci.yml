@@ -100,3 +100,6 @@ release:
         - name: SHA256SUMS
           url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/release/SHA256SUMS"
           filepath: /SHA256SUMS
+        - name: artifacts-metadata.json
+          url: "${CI_PROJECT_URL}/-/jobs/${BUILD_JOB_ID}/artifacts/file/artifacts-metadata.json"
+          filepath: /artifacts-metadata.json

@@ -323,24 +323,24 @@ Two independent proofs are available:
 
 ===== GitLab (SLSA Level 2)
 
-GitLab releases include SLSA Level 2 provenance via `artifacts-metadata.json` in the job artifacts.
+GitLab releases include SLSA Level 2 provenance via `artifacts-metadata.json`.
 
 Verification:
 
 [source,bash]
 ----
-# Download artifacts (includes SLSA metadata)
-curl -L "https://gitlab.com/kambriso/fritzbox-mcp-server/-/jobs/<JOB_ID>/artifacts/download" -o artifacts.zip
+# Download release artifacts (includes SLSA metadata)
+glab release download <tag> -R kambriso/fritzbox-mcp-server # <1>
 
-# Extract and examine provenance
-unzip artifacts.zip artifacts-metadata.json
+# Examine provenance
 cat artifacts-metadata.json | jq '.predicateType'
 # Output: "https://slsa.dev/provenance/v1"
 
 # Verify artifact digest matches
-sha256sum release/fritz-mcp-linux-amd64
+sha256sum fritz-mcp-linux-amd64
 # Compare with digest in artifacts-metadata.json subjects
 ----
+<1> The git tag to verify, e.g., `v0.7.7`
 
 The provenance includes:
 
@@ -357,19 +357,18 @@ Verification using slsa-verifier:
 
 [source,bash]
 ----
-# Install slsa-verifier
-go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest
-
 # Download binary and provenance
 gh release download <tag> -R kambriso/fritzbox-mcp-server \
   -p 'fritz-mcp-linux-amd64' -p '*.intoto.jsonl'
 
 # Verify provenance
-slsa-verifier verify-artifact fritz-mcp-linux-amd64 \
+go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest \
+  verify-artifact fritz-mcp-linux-amd64 \
   --provenance-path multiple.intoto.jsonl \
   --source-uri github.com/kambriso/fritzbox-mcp-server \
-  --source-tag <tag>
+  --source-tag <tag> # <1>
 ----
+<1> The git tag to verify, e.g., `v0.7.7`
 
 ===== Cosign Signature Verification
 
