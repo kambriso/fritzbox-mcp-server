@@ -58,49 +58,49 @@ lint: vet fmt
 check: lint test ## Run lint and tests
 
 $(BUILD_DIR)/linux/amd64/$(BINARY): $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=linux GOARCH=amd64 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
-	@$(STRIP) --strip-all $@ 2>/dev/null || true
+	$(STRIP) --strip-all $@ 2>/dev/null || true
 
 $(BUILD_DIR)/linux/arm64/$(BINARY): $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=linux GOARCH=arm64 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
-	@$(STRIP) --strip-all $@ 2>/dev/null || true
+	$(STRIP) --strip-all $@ 2>/dev/null || true
 
 $(BUILD_DIR)/linux/386/$(BINARY): $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=linux GOARCH=386 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
-	@$(STRIP) --strip-all $@ 2>/dev/null || true
+	$(STRIP) --strip-all $@ 2>/dev/null || true
 
 $(BUILD_DIR)/linux/arm/$(BINARY): $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=linux GOARCH=arm $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
-	@$(STRIP) --strip-all $@ 2>/dev/null || true
+	$(STRIP) --strip-all $@ 2>/dev/null || true
 
 $(BUILD_DIR)/darwin/amd64/$(BINARY): $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=darwin GOARCH=amd64 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
-	@$(STRIP) --strip-all $@ 2>/dev/null || true
+	$(STRIP) --strip-all $@ 2>/dev/null || true
 
 $(BUILD_DIR)/darwin/arm64/$(BINARY): $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=darwin GOARCH=arm64 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
-	@$(STRIP) --strip-all $@ 2>/dev/null || true
+	$(STRIP) --strip-all $@ 2>/dev/null || true
 
 $(BUILD_DIR)/windows/amd64/$(BINARY).exe: $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=windows GOARCH=amd64 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
 
 $(BUILD_DIR)/windows/arm64/$(BINARY).exe: $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=windows GOARCH=arm64 $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
 
 $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm: $(GO_SOURCES)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	GOOS=wasip1 GOARCH=wasm $(GO) build $(DISTFLAGS) -o $@ $(MAIN)
 
 $(DIST_DIR):
-	@mkdir -p $@
+	mkdir -p $@
 
 DIST_BINARIES = \
 	$(BUILD_DIR)/linux/amd64/$(BINARY) \
@@ -182,26 +182,26 @@ all: archives checksums mcpb sbom ## Build all distribution artifacts
 MCPB_STAGING_DIR = $(BUILD_DIR)/mcpb-staging
 
 $(MCPB_STAGING_DIR)/bin/linux-amd64/$(BINARY): $(BUILD_DIR)/linux/amd64/$(BINARY)
-	@install -D $< $@
+	install -D $< $@
 
 $(MCPB_STAGING_DIR)/bin/linux-arm64/$(BINARY): $(BUILD_DIR)/linux/arm64/$(BINARY)
-	@install -D $< $@
+	install -D $< $@
 
 $(MCPB_STAGING_DIR)/bin/darwin-amd64/$(BINARY): $(BUILD_DIR)/darwin/amd64/$(BINARY)
-	@install -D $< $@
+	install -D $< $@
 
 $(MCPB_STAGING_DIR)/bin/darwin-arm64/$(BINARY): $(BUILD_DIR)/darwin/arm64/$(BINARY)
-	@install -D $< $@
+	install -D $< $@
 
 $(MCPB_STAGING_DIR)/bin/windows-amd64/$(BINARY).exe: $(BUILD_DIR)/windows/amd64/$(BINARY).exe
-	@install -D $< $@
+	install -D $< $@
 
 $(MCPB_STAGING_DIR)/bin/windows-arm64/$(BINARY).exe: $(BUILD_DIR)/windows/arm64/$(BINARY).exe
-	@install -D $< $@
+	install -D $< $@
 
 $(MCPB_STAGING_DIR)/manifest.json: mcpb/manifest.json
-	@mkdir -p $(dir $@)
-	@jq '.version = "$(VERSION)"' $< > $@
+	mkdir -p $(dir $@)
+	jq '.version = "$(VERSION)"' $< > $@
 
 MCPB_STAGED_FILES = \
 	$(MCPB_STAGING_DIR)/bin/linux-amd64/$(BINARY) \
@@ -213,13 +213,10 @@ MCPB_STAGED_FILES = \
 	$(MCPB_STAGING_DIR)/manifest.json
 
 $(DIST_DIR)/fritzbox-mcp-server.mcpb: $(MCPB_STAGED_FILES) | $(DIST_DIR)
-	@echo "Building MCPB package $(VERSION)..."
-	@cd $(MCPB_STAGING_DIR) && zip -qr $(CURDIR)/$@ .
-	@echo "✓ Created $@ ($(VERSION))"
+	cd $(MCPB_STAGING_DIR) && zip -qr $(CURDIR)/$@ .
 
 .PHONY: release
 release: $(DIST_DIR)/sbom.json checksums ## Create GitHub release (local use only)
-	@echo "Creating GitHub release $(VERSION)..."
 	gh release create "$(VERSION)" \
 		--repo kambriso/fritzbox-mcp-server \
 		--target bdbb079c98e7c7fd9ac3b1a7d1a09a777a1e236f \
@@ -239,7 +236,7 @@ release: $(DIST_DIR)/sbom.json checksums ## Create GitHub release (local use onl
 
 .PHONY: container-login
 container-login: ## Login to GitHub Container Registry using gh
-	@gh auth token | buildah login ghcr.io -u kambriso --password-stdin
+	gh auth token | buildah login ghcr.io -u kambriso --password-stdin
 
 .PHONY: container-wasi
 container-wasi: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm ## Build WASI container image
@@ -283,18 +280,18 @@ containers-push: container-push-wasi container-push-multiarch ## Push all contai
 
 .PHONY: run-wasi
 run-wasi: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm ## Run WASI binary with wasmedge (requires .env, use ARGS for arguments)
-	@bash -c 'set -a; [ -f .env ] && . ./.env || [ -f ~/.config/fritzbox-mcp-server/.env ] && . ~/.config/fritzbox-mcp-server/.env; wasmedge --dir .:. --env FRITZ_HOST=$$FRITZ_HOST --env FRITZ_PORT=$$FRITZ_PORT --env FRITZ_USERNAME=$$FRITZ_USERNAME --env FRITZ_PASSWORD=$$FRITZ_PASSWORD --env FRITZ_TLS=$$FRITZ_TLS $< $(ARGS)'
+	bash -c 'set -a; [ -f .env ] && . ./.env || [ -f ~/.config/fritzbox-mcp-server/.env ] && . ~/.config/fritzbox-mcp-server/.env; wasmedge --dir .:. --env FRITZ_HOST=$$FRITZ_HOST --env FRITZ_PORT=$$FRITZ_PORT --env FRITZ_USERNAME=$$FRITZ_USERNAME --env FRITZ_PASSWORD=$$FRITZ_PASSWORD --env FRITZ_TLS=$$FRITZ_TLS $< $(ARGS)'
 
 .PHONY: run-container
 run-container: ## Run published multi-arch container from ghcr.io (requires .env, use ARGS for arguments)
-	@bash -c 'set -a; [ -f .env ] && . ./.env || [ -f ~/.config/fritzbox-mcp-server/.env ] && . ~/.config/fritzbox-mcp-server/.env; \
+	bash -c 'set -a; [ -f .env ] && . ./.env || [ -f ~/.config/fritzbox-mcp-server/.env ] && . ~/.config/fritzbox-mcp-server/.env; \
 	podman run --rm \
 		--env FRITZ_HOST --env FRITZ_PORT --env FRITZ_USERNAME --env FRITZ_PASSWORD --env FRITZ_TLS \
 		ghcr.io/kambriso/fritzbox-mcp-server:$(VERSION) $(ARGS)'
 
 .PHONY: run-container-local
 run-container-local: container-multiarch ## Build and run local multi-arch container (requires .env, use ARGS for arguments)
-	@bash -c 'set -a; [ -f .env ] && . ./.env || [ -f ~/.config/fritzbox-mcp-server/.env ] && . ~/.config/fritzbox-mcp-server/.env; \
+	bash -c 'set -a; [ -f .env ] && . ./.env || [ -f ~/.config/fritzbox-mcp-server/.env ] && . ~/.config/fritzbox-mcp-server/.env; \
 	podman run --rm \
 		--env FRITZ_HOST --env FRITZ_PORT --env FRITZ_USERNAME --env FRITZ_PASSWORD --env FRITZ_TLS \
 		ghcr.io/kambriso/fritzbox-mcp-server:$(VERSION) $(ARGS)'
@@ -307,7 +304,7 @@ run-wasi-container: container-wasi ## Run WASI OCI container with podman (use AR
 
 .PHONY: deps
 deps: ## List dependencies
-	@$(GO) list -m all
+	$(GO) list -m all
 
 # SLSA verification
 SLSA_TAG ?= $(VERSION)
@@ -315,38 +312,107 @@ GITHUB_REPO ?= kambriso/fritzbox-mcp-server
 GITLAB_REPO ?= kambriso/fritzbox-mcp-server
 VERIFY_DIR ?= $(BUILD_DIR)/verify
 
-.PHONY: verify-slsa-github
-verify-slsa-github: ## Verify GitHub release SLSA provenance (use SLSA_TAG=v0.x.x)
-	@mkdir -p $(VERIFY_DIR)/github
+# GitHub SLSA Level 3 verification (downloads binary + provenance, then verifies)
+define slsa-verify-github
+	mkdir -p $(VERIFY_DIR)/github
 	gh release download $(SLSA_TAG) -R $(GITHUB_REPO) -D $(VERIFY_DIR)/github --clobber \
-		-p 'fritz-mcp-*' -p '*.intoto.jsonl' -p 'SHA256SUMS'
-	@echo "Verifying GitHub SLSA Level 3 provenance..."
-	@for f in $(VERIFY_DIR)/github/fritz-mcp-*; do \
-		[ -f "$$f" ] && [ "$${f##*.}" != "jsonl" ] && \
-		echo "  $$f" && \
-		go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest verify-artifact "$$f" \
-			--provenance-path $(VERIFY_DIR)/github/multiple.intoto.jsonl \
-			--source-uri github.com/$(GITHUB_REPO) || exit 1; \
-	done
-	@echo "GitHub SLSA verification passed"
+		-p '$(1)' -p 'multiple.intoto.jsonl'
+	go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest verify-artifact \
+		$(VERIFY_DIR)/github/$(1) \
+		--provenance-path $(VERIFY_DIR)/github/multiple.intoto.jsonl \
+		--source-uri github.com/$(GITHUB_REPO)
+endef
+
+.PHONY: verify-slsa-github-linux-amd64
+verify-slsa-github-linux-amd64: ## Verify GitHub linux-amd64
+	$(call slsa-verify-github,fritz-mcp-linux-amd64)
+
+.PHONY: verify-slsa-github-linux-arm64
+verify-slsa-github-linux-arm64: ## Verify GitHub linux-arm64
+	$(call slsa-verify-github,fritz-mcp-linux-arm64)
+
+.PHONY: verify-slsa-github-linux-arm
+verify-slsa-github-linux-arm: ## Verify GitHub linux-arm
+	$(call slsa-verify-github,fritz-mcp-linux-arm)
+
+.PHONY: verify-slsa-github-linux-386
+verify-slsa-github-linux-386: ## Verify GitHub linux-386
+	$(call slsa-verify-github,fritz-mcp-linux-386)
+
+.PHONY: verify-slsa-github-darwin-amd64
+verify-slsa-github-darwin-amd64: ## Verify GitHub darwin-amd64
+	$(call slsa-verify-github,fritz-mcp-darwin-amd64)
+
+.PHONY: verify-slsa-github-darwin-arm64
+verify-slsa-github-darwin-arm64: ## Verify GitHub darwin-arm64
+	$(call slsa-verify-github,fritz-mcp-darwin-arm64)
+
+.PHONY: verify-slsa-github-windows-amd64
+verify-slsa-github-windows-amd64: ## Verify GitHub windows-amd64
+	$(call slsa-verify-github,fritz-mcp-windows-amd64.exe)
+
+.PHONY: verify-slsa-github-windows-arm64
+verify-slsa-github-windows-arm64: ## Verify GitHub windows-arm64
+	$(call slsa-verify-github,fritz-mcp-windows-arm64.exe)
+
+.PHONY: verify-slsa-github-wasi
+verify-slsa-github-wasi: ## Verify GitHub wasi
+	$(call slsa-verify-github,fritz-mcp-wasi.wasm)
+
+.PHONY: verify-slsa-github
+verify-slsa-github: verify-slsa-github-linux-amd64 verify-slsa-github-linux-arm64 verify-slsa-github-linux-arm verify-slsa-github-linux-386 verify-slsa-github-darwin-amd64 verify-slsa-github-darwin-arm64 verify-slsa-github-windows-amd64 verify-slsa-github-windows-arm64 verify-slsa-github-wasi ## Verify GitHub SLSA Level 3 provenance (use SLSA_TAG=v0.x.x)
+
+# GitLab SLSA Level 2 verification (downloads binary + sig + cert, then verifies)
+define slsa-verify-gitlab
+	mkdir -p $(VERIFY_DIR)/gitlab
+	glab release download $(SLSA_TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab \
+		-n '$(1)' -n '$(1).sig' -n '$(1).pem'
+	go run github.com/sigstore/cosign/v2/cmd/cosign@latest verify-blob \
+		--signature $(VERIFY_DIR)/gitlab/$(1).sig \
+		--certificate $(VERIFY_DIR)/gitlab/$(1).pem \
+		--certificate-identity-regexp '.*' \
+		--certificate-oidc-issuer https://gitlab.com \
+		$(VERIFY_DIR)/gitlab/$(1)
+endef
+
+.PHONY: verify-slsa-gitlab-linux-amd64
+verify-slsa-gitlab-linux-amd64: ## Verify GitLab linux-amd64
+	$(call slsa-verify-gitlab,fritz-mcp-linux-amd64)
+
+.PHONY: verify-slsa-gitlab-linux-arm64
+verify-slsa-gitlab-linux-arm64: ## Verify GitLab linux-arm64
+	$(call slsa-verify-gitlab,fritz-mcp-linux-arm64)
+
+.PHONY: verify-slsa-gitlab-linux-arm
+verify-slsa-gitlab-linux-arm: ## Verify GitLab linux-arm
+	$(call slsa-verify-gitlab,fritz-mcp-linux-arm)
+
+.PHONY: verify-slsa-gitlab-linux-386
+verify-slsa-gitlab-linux-386: ## Verify GitLab linux-386
+	$(call slsa-verify-gitlab,fritz-mcp-linux-386)
+
+.PHONY: verify-slsa-gitlab-darwin-amd64
+verify-slsa-gitlab-darwin-amd64: ## Verify GitLab darwin-amd64
+	$(call slsa-verify-gitlab,fritz-mcp-darwin-amd64)
+
+.PHONY: verify-slsa-gitlab-darwin-arm64
+verify-slsa-gitlab-darwin-arm64: ## Verify GitLab darwin-arm64
+	$(call slsa-verify-gitlab,fritz-mcp-darwin-arm64)
+
+.PHONY: verify-slsa-gitlab-windows-amd64
+verify-slsa-gitlab-windows-amd64: ## Verify GitLab windows-amd64
+	$(call slsa-verify-gitlab,fritz-mcp-windows-amd64.exe)
+
+.PHONY: verify-slsa-gitlab-windows-arm64
+verify-slsa-gitlab-windows-arm64: ## Verify GitLab windows-arm64
+	$(call slsa-verify-gitlab,fritz-mcp-windows-arm64.exe)
+
+.PHONY: verify-slsa-gitlab-wasi
+verify-slsa-gitlab-wasi: ## Verify GitLab wasi
+	$(call slsa-verify-gitlab,fritz-mcp-wasi.wasm)
 
 .PHONY: verify-slsa-gitlab
-verify-slsa-gitlab: ## Verify GitLab release signatures (use SLSA_TAG=v0.x.x)
-	@mkdir -p $(VERIFY_DIR)/gitlab
-	glab release download $(SLSA_TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab \
-		-n 'fritz-mcp-*' -n 'artifacts-metadata.json' -n 'SHA256SUMS'
-	@echo "Verifying GitLab SLSA Level 2 signatures..."
-	@for f in $(VERIFY_DIR)/gitlab/fritz-mcp-*; do \
-		[ -f "$$f" ] && [ "$${f##*.}" != "sig" ] && [ "$${f##*.}" != "pem" ] && \
-		echo "  $$f" && \
-		go run github.com/sigstore/cosign/v2/cmd/cosign@latest verify-blob \
-			--signature "$$f.sig" \
-			--certificate "$$f.pem" \
-			--certificate-identity-regexp '.*' \
-			--certificate-oidc-issuer https://gitlab.com \
-			"$$f" || exit 1; \
-	done
-	@echo "GitLab SLSA verification passed"
+verify-slsa-gitlab: verify-slsa-gitlab-linux-amd64 verify-slsa-gitlab-linux-arm64 verify-slsa-gitlab-linux-arm verify-slsa-gitlab-linux-386 verify-slsa-gitlab-darwin-amd64 verify-slsa-gitlab-darwin-arm64 verify-slsa-gitlab-windows-amd64 verify-slsa-gitlab-windows-arm64 verify-slsa-gitlab-wasi ## Verify GitLab SLSA Level 2 signatures (use SLSA_TAG=v0.x.x)
 
 .PHONY: verify-slsa
 verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify SLSA provenance on both forges
@@ -354,7 +420,7 @@ verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify SLSA provenance on 
 # VirusTotal scanning (requires VT_API_KEY environment variable)
 define vt-scan
 	@echo "Scanning $(1)..."
-	@curl -s --request POST \
+	curl -s --request POST \
 		--url https://www.virustotal.com/api/v3/files \
 		--header "x-apikey: $(VT_API_KEY)" \
 		--form file=@"$(1)" > /dev/null
@@ -363,7 +429,7 @@ endef
 
 .PHONY: virustotal
 virustotal: virustotal-linux-amd64 virustotal-linux-arm64 virustotal-linux-386 virustotal-linux-arm virustotal-darwin-amd64 virustotal-darwin-arm64 virustotal-windows-amd64 virustotal-windows-arm64 virustotal-wasi-wasm ## Scan all binaries with VirusTotal
-	@cat VT_RESULTS.txt
+	cat VT_RESULTS.txt
 
 .PHONY: virustotal-linux-amd64
 virustotal-linux-amd64: $(BUILD_DIR)/linux/amd64/$(BINARY)
