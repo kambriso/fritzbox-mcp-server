@@ -354,6 +354,13 @@ sha256sum fritz-mcp-linux-amd64
 ----
 <1> The git tag to verify, e.g., `v0.7.7`
 
+Alternatively, use the Makefile target:
+
+[source,bash]
+----
+make verify-slsa-gitlab-linux-amd64 SLSA_TAG=<tag>
+----
+
 The provenance includes:
 
 * In-toto statement format (`https://in-toto.io/Statement/v0.1`)
@@ -381,6 +388,13 @@ go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest \
   --source-tag <tag> # <1>
 ----
 <1> The git tag to verify, e.g., `v0.7.7`
+
+Alternatively, use the Makefile target:
+
+[source,bash]
+----
+make verify-slsa-github-linux-amd64 SLSA_TAG=<tag>
+----
 
 ===== Cosign Signature Verification
 
