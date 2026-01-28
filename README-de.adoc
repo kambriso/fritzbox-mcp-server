@@ -22,7 +22,8 @@ toc::[]
 
 === Was ist das?
 
-Dieser MCP-Server ermöglicht die Interaktion mit deiner FRITZ!Box über KI-Assistenten. Stelle Fragen in natürlicher Sprache, analysiere dein Netzwerk, verwalte Geräte, behebe Probleme und konfiguriere Einstellungen - ohne die Web-Oberfläche zu berühren.
+Dieser MCP-Server ermöglicht die Interaktion mit deiner FRITZ!Box über KI-Assistenten.
+Stelle Fragen in natürlicher Sprache, analysiere dein Netzwerk, verwalte Geräte, behebe Probleme und konfiguriere Einstellungen - ohne die Web-Oberfläche zu berühren.
 
 === So funktioniert es (Sicherheitsarchitektur)
 
@@ -30,7 +31,8 @@ image::architecture.svg[Architektur-Diagramm]
 
 Der MCP-Server läuft auf deinem Computer und fungiert als sichere Brücke zwischen KI-Agenten (die in der Cloud laufen) und deiner FRITZ!Box (die komplett lokal bleibt).
 
-Deine FRITZ!Box-Zugangsdaten werden lokal in einer `.env` Datei auf deinem Computer gespeichert. Der MCP-Server verwendet diese Zugangsdaten nur für die Kommunikation mit deiner FRITZ!Box über dein lokales Netzwerk.
+Deine FRITZ!Box-Zugangsdaten werden lokal in einer `.env` Datei auf deinem Computer gespeichert.
+Der MCP-Server verwendet diese Zugangsdaten nur für die Kommunikation mit deiner FRITZ!Box über dein lokales Netzwerk.
 
 Der KI-Agent erhält nur die Ergebnisse (wie "3 Geräte verbunden" oder "Router-Laufzeit: 5 Tage"), niemals deine Zugangsdaten oder direkten Zugriff auf deinen Router.
 
@@ -44,7 +46,9 @@ Kritische Sicherheitsmerkmale:
 
 === Warum diesen Server nutzen?
 
-Funktioniert mit ALLEN FRITZ!Box-Modellen und Firmware-Versionen. Wenn AVM neue Features oder Modelle veröffentlicht, passt sich dieser Server automatisch an. Keine Updates nötig.
+Funktioniert mit ALLEN FRITZ!Box-Modellen und Firmware-Versionen.
+Wenn AVM neue Features oder Modelle veröffentlicht, passt sich dieser Server automatisch an.
+Keine Updates nötig.
 
 Anders als andere Lösungen, die bei Firmware-Updates kaputt gehen oder nur mit bestimmten Modellen funktionieren, erkennt dieser Server die Fähigkeiten deines Routers in Echtzeit.
 
@@ -123,7 +127,8 @@ Oder lege sie zum Testen im gleichen Ordner wie die Binärdatei ab.
 
 [WARNING]
 ====
-Diese Datei enthält dein Passwort. Halte sie sicher und committe sie niemals in die Versionsverwaltung.
+Diese Datei enthält dein Passwort.
+Halte sie sicher und committe sie niemals in die Versionsverwaltung.
 
 Unter Linux/macOS: Zugriff beschränken mit `chmod 600 ~/.config/fritzbox-mcp-server/.env`
 ====
@@ -295,13 +300,18 @@ Starte Claude Desktop nach Konfigurationsänderungen neu.
 
 ==== Berechtigungsfehler
 
-Dein FRITZ!Box-Benutzer benötigt die "FRITZ!Box-Einstellungen" Berechtigung. Siehe Konfigurationsabschnitt oben.
+Dein FRITZ!Box-Benutzer benötigt die "FRITZ!Box-Einstellungen" Berechtigung.
+Siehe Konfigurationsabschnitt oben.
 
 === Datenschutz & Sicherheit
 
-Alle Kommunikation bleibt in deinem lokalen Netzwerk. Deine Zugangsdaten werden lokal in einer `.env` Datei gespeichert und nur für die Kommunikation mit deiner FRITZ!Box verwendet. Die KI erhält nur die Ergebnisse der Operationen, niemals deine Zugangsdaten.
+Alle Kommunikation bleibt in deinem lokalen Netzwerk.
+Deine Zugangsdaten werden lokal in einer `.env` Datei gespeichert und nur für die Kommunikation mit deiner FRITZ!Box verwendet.
+Die KI erhält nur die Ergebnisse der Operationen, niemals deine Zugangsdaten.
 
-Keine Cloud-Dienste. Keine externen Server. Alles läuft lokal.
+Keine Cloud-Dienste.
+Keine externen Server.
+Alles läuft lokal.
 
 ==== Binär-Verifizierung
 
@@ -312,9 +322,10 @@ Unabhängige VirusTotal-Scans bestätigen, dass die Binärdateien sauber sind:
 * https://www.virustotal.com/gui/file/65fb7ccad5d7e83210a788d1fc3e4b9a69c1dbaee2af81ada82fdb0474c26e36[darwin-arm64]
 * https://www.virustotal.com/gui/file/c4b0d05b2a4d60bb34d149974779d7115d31f4568dadd4843e6c5b3e275c5c17[windows-amd64]
 
-==== Supply-Chain-Sicherheit (SLSA)
+==== Supply-Chain-Sicherheit (Supply chain Levels for Software Artifacts, SLSA)
 
-Dieses Projekt stellt https://slsa.dev[SLSA]-Provenienz (Supply chain Levels for Software Artifacts) für alle Release-Binärdateien bereit. SLSA-Provenienz attestiert kryptographisch, dass Binärdateien aus spezifischem Quellcode von einem vertrauenswürdigen Builder erstellt wurden.
+Dieses Projekt stellt https://slsa.dev[SLSA]-Provenienz (Supply chain Levels for Software Artifacts) für alle Release-Binärdateien bereit.
+SLSA-Provenienz attestiert kryptographisch, dass Binärdateien aus spezifischem Quellcode von einem vertrauenswürdigen Builder erstellt wurden.
 
 Zwei unabhängige Nachweise sind verfügbar:
 
@@ -329,8 +340,9 @@ Verifizierung:
 
 [source,bash]
 ----
-# Release-Artefakte herunterladen (enthält SLSA-Metadaten)
-glab release download <tag> -R kambriso/fritzbox-mcp-server # <1>
+# Binary und SLSA-Metadaten herunterladen
+glab release download <tag> -R kambriso/fritzbox-mcp-server \
+  -n 'fritz-mcp-linux-amd64' -n 'artifacts-metadata.json' # <1>
 
 # Provenienz prüfen
 cat artifacts-metadata.json | jq '.predicateType'
@@ -372,7 +384,8 @@ go run github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest \
 
 ===== Cosign-Signatur-Verifizierung
 
-Alle Binärdateien sind mit https://docs.sigstore.dev/cosign/[Cosign] und schlüsselloser Signierung (OIDC) signiert. Signaturen und Zertifikate sind in den Release-Artefakten enthalten.
+Alle Binärdateien sind mit https://docs.sigstore.dev/cosign/[Cosign] und schlüsselloser Signierung (OIDC) signiert.
+Signaturen und Zertifikate sind in den Release-Artefakten enthalten.
 
 [source,bash]
 ----
@@ -402,12 +415,13 @@ sha256sum -c SHA256SUMS
 # 3. SLSA-Provenienz verifizieren (slsa-verifier oder manuelle Prüfung)
 # 4. Cosign-Signatur verifizieren (benötigt Netzwerk für Zertifikatskette)
 
-# Vollständige Vertrauenskette: Quellcode -> CI-Build -> signiertes Artefakt -> Ihr Rechner
+# Vollständige Vertrauenskette: Quellcode -> CI-Build -> signiertes Artefakt -> dein Rechner
 ----
 
 ==== Cross-Git-Forge Verifizierung
 
-Dieses Projekt veröffentlicht identische Releases auf GitLab und GitHub. Cross-Forge-Verifizierung beweist, dass keine der Forges kompromittiert wurde - wenn ein Angreifer Binärdateien auf einer Forge modifiziert hätte, würden die Prüfsummen nicht übereinstimmen.
+Dieses Projekt veröffentlicht identische Releases auf GitLab und GitHub.
+Cross-Forge-Verifizierung beweist, dass keine der Forges kompromittiert wurde - wenn ein Angreifer Binärdateien auf einer Forge modifiziert hätte, würden die Prüfsummen nicht übereinstimmen.
 
 Dies ist unabhängig von SLSA: Während SLSA beweist "diese Binärdatei stammt aus diesem Quellcode", beweist Cross-Forge-Verifizierung "beide Forges liefern dieselbe Binärdatei".
 
@@ -435,7 +449,8 @@ Warum das wichtig ist:
 
 === Token-Nutzung Hinweise
 
-Dieser MCP-Server stellt 143 Tools für den KI-Assistenten bereit. Jede Tool-Definition (Name, Beschreibung, JSON-Schema) wird mit jeder Nachricht gesendet.
+Dieser MCP-Server stellt 143 Tools für den KI-Assistenten bereit.
+Jede Tool-Definition (Name, Beschreibung, JSON-Schema) wird mit jeder Nachricht gesendet.
 
 ==== Auswirkungen auf Claude Code / Claude API
 
@@ -460,11 +475,13 @@ claude --mcp-server fritzbox=off
 Erwäge die Aktivierung nur für spezifische Projekte die Router-Zugriff benötigen, anstatt global.
 
 ===== Für lokale LLMs
-Bei Verwendung mit lokalen Modellen (llama.cpp, Ollama) können 143 Tools kleinere Modelle überfordern. Verwende Tool-Filterung um nur benötigte Tools bereitzustellen.
+Bei Verwendung mit lokalen Modellen (llama.cpp, Ollama) können 143 Tools kleinere Modelle überfordern.
+Verwende Tool-Filterung um nur benötigte Tools bereitzustellen.
 
 [TIP]
 ====
-Nach der ersten Nachricht in einer Session reduziert Claudes Prompt-Caching die Token-Kosten für folgende Nachrichten. Der Overhead ist am bedeutendsten bei kurzen Konversationen.
+Nach der ersten Nachricht in einer Session reduziert Claudes Prompt-Caching die Token-Kosten für folgende Nachrichten.
+Der Overhead ist am bedeutendsten bei kurzen Konversationen.
 ====
 
 == Entwicklerhandbuch
@@ -488,7 +505,8 @@ Dieses Projekt verwendet das Community MCP SDK (https://github.com/mark3labs/mcp
 * Community SDK: Praxiserprobt, keine bekannten Kompatibilitätsprobleme
 * API-Inkompatibilität: Die beiden SDKs sind nicht API-kompatibel (siehe https://github.com/modelcontextprotocol/go-sdk/blob/main/design/design.md[offizielles SDK Design-Dokument])
 
-Das offizielle SDK verwendet eine andere JSON-RPC-Implementierung und eine niedrigere Transport-Schnittstelle. Während beide SDKs eigenständig funktionieren, hat sich das Community SDK als zuverlässiger für stdio-Transport mit Claude Code Clients erwiesen.
+Das offizielle SDK verwendet eine andere JSON-RPC-Implementierung und eine niedrigere Transport-Schnittstelle.
+Während beide SDKs eigenständig funktionieren, hat sich das Community SDK als zuverlässiger für stdio-Transport mit Claude Code Clients erwiesen.
 
 === Entwicklungsumgebung
 
@@ -567,15 +585,19 @@ Dies erstellt Binärdateien in `dist/` für:
 
 ==== WASI Build Hinweise
 
-Ein WASI (WebAssembly System Interface) Build ist enthalten um Code-Portabilität zu demonstrieren. Go's wasip1-Target hat jedoch erhebliche Einschränkungen für Netzwerkanwendungen:
+Ein WASI (WebAssembly System Interface) Build ist enthalten um Code-Portabilität zu demonstrieren.
+Go's wasip1-Target hat jedoch erhebliche Einschränkungen für Netzwerkanwendungen:
 
 * Kein Netzwerkzugriff - Go unterstützt nur WASI Preview 1, dem Socket-APIs fehlen
 * Eingeschränkter Dateisystemzugriff
 * Bietet Capability-basierte Sicherheits-Sandbox
 
-NOTE: Während WasmEdge Sockets unterstützt und WASI Preview 2 wasi-sockets enthält, zielt Go derzeit nur auf wasip1 (versiegelt ohne Netzwerk). WASI Preview 2 wurde im Januar 2024 gestartet, aber Go hat keinen angekündigten Zeitplan für GOOS=wasip2 Unterstützung (verfolgt in https://github.com/golang/go/issues/65333[Issue #65333]). Go 1.24 (Feb 2025) und Go 1.25 (Aug 2025) enthalten kein wasip2.
+NOTE: Während WasmEdge Sockets unterstützt und WASI Preview 2 wasi-sockets enthält, zielt Go derzeit nur auf wasip1 (versiegelt ohne Netzwerk).
+WASI Preview 2 wurde im Januar 2024 gestartet, aber Go hat keinen angekündigten Zeitplan für GOOS=wasip2 Unterstützung (verfolgt in https://github.com/golang/go/issues/65333[Issue #65333]).
+Go 1.24 (Feb 2025) und Go 1.25 (Aug 2025) enthalten kein wasip2.
 
-Empfehlung: Verwende native Binärdateien oder Multi-Arch-Container für Produktion. Der WASI-Build demonstriert WebAssembly-Portabilität, kann aber mit aktuellen Go-Releases nicht als Netzwerkdienst funktionieren.
+Empfehlung: Verwende native Binärdateien oder Multi-Arch-Container für Produktion.
+Der WASI-Build demonstriert WebAssembly-Portabilität, kann aber mit aktuellen Go-Releases nicht als Netzwerkdienst funktionieren.
 
 Bauen für spezifische Plattform:
 
@@ -588,7 +610,8 @@ GOOS=windows GOARCH=amd64 make dist
 
 ==== Reproduzierbare Builds
 
-Alle Release-Binärdateien sind reproduzierbar: Das Bauen aus dem gleichen Quellcode erzeugt byte-für-byte identische Binärdateien. Dies ermöglicht unabhängige Verifizierung, dass veröffentlichte Binärdateien mit dem Quellcode übereinstimmen.
+Alle Release-Binärdateien sind reproduzierbar: Das Bauen aus dem gleichen Quellcode erzeugt byte-für-byte identische Binärdateien.
+Dies ermöglicht unabhängige Verifizierung, dass veröffentlichte Binärdateien mit dem Quellcode übereinstimmen.
 
 ===== Warum Reproduzierbarkeit wichtig ist
 
@@ -613,7 +636,8 @@ SOURCE_DATE_EPOCH=$(git)     # Verwendet Commit-Zeitstempel
 
 ===== Toolchain-Anforderungen
 
-Go erzeugt reproduzierbare Binärdateien bei Verwendung der gleichen Toolchain-Distribution. Verschiedene Go-Distributionen (Upstream vs Fedora/Debian-Pakete) können jedoch unterschiedliche Binärdateien erzeugen aufgrund distributions-spezifischer Patches oder Build-Experimente.
+Go erzeugt reproduzierbare Binärdateien bei Verwendung der gleichen Toolchain-Distribution.
+Verschiedene Go-Distributionen (Upstream vs Fedora/Debian-Pakete) können jedoch unterschiedliche Binärdateien erzeugen aufgrund distributions-spezifischer Patches oder Build-Experimente.
 
 Bekannte Unterschiede:
 
@@ -638,7 +662,9 @@ Das golang:1.25 Docker-Image entspricht der Upstream Go Distribution und gewähr
 
 ===== CI/CD Reproduzierbarkeit
 
-Sowohl GitLab CI als auch GitHub Actions verwenden die offizielle Go 1.25 Toolchain: GitLab über das golang:1.25 Container-Image, GitHub über actions/setup-go das von go.dev herunterlädt. Beide erzeugen byte-für-byte identische Binärdateien. Lokale Builds mit distributions-bereitgestellten Go-Paketen (Fedora, Ubuntu, etc.) können unterschiedliche Binärdateien erzeugen aufgrund distro-spezifischer Patches.
+Sowohl GitLab CI als auch GitHub Actions verwenden die offizielle Go 1.25 Toolchain: GitLab über das golang:1.25 Container-Image, GitHub über actions/setup-go das von go.dev herunterlädt.
+Beide erzeugen byte-für-byte identische Binärdateien.
+Lokale Builds mit distributions-bereitgestellten Go-Paketen (Fedora, Ubuntu, etc.) können unterschiedliche Binärdateien erzeugen aufgrund distro-spezifischer Patches.
 
 Für byte-für-byte reproduzierbare lokale Builds verwende `make dists-container` das im golang:1.25 Container baut.
 
@@ -705,7 +731,8 @@ Container Workflow (link:.github/workflows/container.yml[container.yml])::
 . Multi-Arch Container bauen (linux/amd64, linux/arm64)
 . Zu ghcr.io/kambriso/fritzbox-mcp-server veröffentlichen
 
-NOTE: Verwende den Multi-Arch Container für Produktion. Der WASI Container demonstriert Portabilität aber Go's wasip1-Target hat keine Netzwerk-Unterstützung (bis wasip2 Unterstützung in zukünftigen Go-Versionen).
+NOTE: Verwende den Multi-Arch Container für Produktion.
+Der WASI Container demonstriert Portabilität aber Go's wasip1-Target hat keine Netzwerk-Unterstützung (bis wasip2 Unterstützung in zukünftigen Go-Versionen).
 
 ==== Unterstützte Release-Plattformen
 
@@ -726,19 +753,24 @@ Source Code:: https://github.com/kambriso/fritz-mcp (privat)
 
 == Lizenz
 
-Source-available. Kostenlos für genau ein FRITZ!Box-Zugangsdatenpaar. Alles andere erfordert eine kommerzielle Lizenz.
+Source-available.
+Kostenlos für genau ein FRITZ!Box-Zugangsdatenpaar.
+Alles andere erfordert eine kommerzielle Lizenz.
 
 Siehe link:LICENSE.txt[LICENSE.txt] für vollständige Bedingungen.
 
 == Beitragen
 
-Beiträge sind willkommen. Mit dem Einreichen eines Pull Requests stimmst du der link:CONTRIBUTING.adoc[Contributor License Agreement] zu.
+Beiträge sind willkommen.
+Mit dem Einreichen eines Pull Requests stimmst du der link:CONTRIBUTING.adoc[Contributor License Agreement] zu.
 
 [CAUTION]
 ====
-Diese Software wird wie besehen bereitgestellt. Sichere deine FRITZ!Box mit einem starken Passwort und stelle sicher, dass sie nicht dem Internet ausgesetzt ist.
+Diese Software wird wie besehen bereitgestellt.
+Sichere deine FRITZ!Box mit einem starken Passwort und stelle sicher, dass sie nicht dem Internet ausgesetzt ist.
 ====
 
 '''
 
-FRITZ!Box ist eine eingetragene Marke der FRITZ! GmbH (ehemals AVM GmbH). Dieses Projekt ist nicht mit FRITZ! GmbH verbunden, wird nicht von FRITZ! GmbH unterstützt oder gesponsert.
+FRITZ!Box ist eine eingetragene Marke der FRITZ! GmbH (ehemals AVM GmbH).
+Dieses Projekt ist nicht mit FRITZ! GmbH verbunden, wird nicht von FRITZ! GmbH unterstützt oder gesponsert.
