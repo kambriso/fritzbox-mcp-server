@@ -12,7 +12,7 @@ test:
     - make build
     - make test
 
-build:
+release:
   image: golang:1.25
   rules:
     - if: $CI_COMMIT_TAG
@@ -20,6 +20,9 @@ build:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
+    - make tidy
+    - make build
+    - make test
     - VERSION=${CI_COMMIT_TAG#v}
     - make dists
     # Flatten binaries for release
@@ -58,16 +61,6 @@ build:
     expire_in: 1 day
     paths:
       - release/
-
-release:
-  image: registry.gitlab.com/gitlab-org/cli:latest
-  rules:
-    - if: $CI_COMMIT_TAG
-  needs:
-    - job: build
-      artifacts: false
-  script:
-    - echo "Creating release ${CI_COMMIT_TAG}"
   release:
     tag_name: $CI_COMMIT_TAG
     name: ${CI_COMMIT_TAG#v}
@@ -158,6 +151,3 @@ release:
         - name: SHA256SUMS
           url: "${PACKAGE_REGISTRY_URL}/SHA256SUMS"
           filepath: /SHA256SUMS
-        - name: artifacts-metadata.json
-          url: "${PACKAGE_REGISTRY_URL}/artifacts-metadata.json"
-          filepath: /artifacts-metadata.json
