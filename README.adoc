@@ -29,11 +29,6 @@ Ask questions in plain language, analyze your network, manage devices, troublesh
 
 image::arch.svg[Architecture Diagram]
 
-
-  Agent <--> |Local| MCP
-  Fritz <--> |Local only| MCP
-----
-
 The MCP server runs on your computer and acts as a secure bridge between AI agents (which run in the cloud) and your FRITZ!Box (which stays completely local).
 
 Your FRITZ!Box credentials are stored locally in a `.env` file on your computer.
