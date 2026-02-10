@@ -134,7 +134,7 @@ func runSetupMode() error {
 		fmt.Printf("Existing configuration found at %s.\n", path)
 		fmt.Print("Do you want to overwrite it? [y/N]: ")
 		var resp string
-		fmt.Scanln(&resp)
+		_, _ = fmt.Scanln(&resp)
 		if strings.ToLower(resp) != "y" {
 			fmt.Println("Aborted.")
 			return nil
@@ -181,7 +181,7 @@ func runSetupMode() error {
 		}
 		fmt.Print("Select device [1]: ")
 		var idx int
-		fmt.Scanln(&idx)
+		_, _ = fmt.Scanln(&idx)
 		if idx < 1 || idx > len(results) {
 			idx = 1
 		}
