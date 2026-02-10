@@ -12,7 +12,7 @@ digraph G {
     color="#ff4d4d";
     fillcolor="#3a1a1a";
     fontcolor="#ffb3b3";
-    
+
     ai [label="AI Service\n(Anthropic, OpenAI, etc.)", fillcolor="#d84a4a", fontcolor="white", color="#b03030"];
     isp [label="Your ISP\n(Internet connection)", fillcolor="#d84a4a", fontcolor="white", color="#b03030"];
   }
@@ -25,7 +25,7 @@ digraph G {
     fillcolor="#3a2a12";
     fontcolor="#ffd3a1";
 
-    agent [label="AI Agent\n(Claude Desktop, etc.)", fillcolor="#ffb35a", fontcolor="#1a1a1a", color="#cc7a10"];
+    agent [label="AI Agent\n(Claude, GPT4all, LM Studio, ...)", fillcolor="#ffb35a", fontcolor="#1a1a1a", color="#cc7a10"];
     fritz [label="FRITZ!Box\nYour router", fillcolor="#ffb35a", fontcolor="#1a1a1a", color="#cc7a10"];
   }
 
@@ -37,12 +37,14 @@ digraph G {
     fillcolor="#14301d";
     fontcolor="#b8f2c8";
 
-    mcp [label="MCP Server (This Software)\n+ Your FRITZ!Box Credentials", fillcolor="#8fe0a6", fontcolor="#0f2416", color="#2a8d4a"];
+    llm [label="Local LLM", fillcolor="#8fe0a6", fontcolor="#0f2416", color="#2a8d4a"];
+    mcp [label="FRITZ!Box MCP Server\n+ Your FRITZ!Box Credentials", fillcolor="#8fe0a6", fontcolor="#0f2416", color="#2a8d4a"];
   }
 
-  ai -> agent [label="Internet", fontcolor="#cfcfcf"];
-  isp -> fritz [label="Internet", fontcolor="#cfcfcf"];
-  agent -> mcp [label="Local", fontcolor="#cfcfcf"];
-  fritz -> mcp [label="Local only", fontcolor="#cfcfcf"];
+  ai -> agent  [fontcolor="#cfcfcf", dir="both"];
+  isp -> fritz [fontcolor="#cfcfcf", dir="both"];
+  agent -> mcp [fontcolor="#cfcfcf", dir="both"];
+  agent -> llm [fontcolor="#cfcfcf", dir="both"];
+  fritz -> mcp [fontcolor="#cfcfcf", dir="both"];
 }
 
