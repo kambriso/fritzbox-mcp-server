@@ -19,6 +19,45 @@ type config struct {
 	TLS      bool
 }
 
+// configFile returns the path to the config file if it exists
+func configFile() string {
+	// 1. Check current directory
+	if _, err := os.Stat(".env"); err == nil {
+		return ".env"
+	}
+	// 2. Check global config directory
+	if configDir := getConfigDir(); configDir != "" {
+		globalEnv := filepath.Join(configDir, ".env")
+		if _, err := os.Stat(globalEnv); err == nil {
+			return globalEnv
+		}
+	}
+	return ""
+}
+
+// save writes the configuration to a .env file with 0600 permissions
+func (c *config) save(path string) error {
+	// Create parent directory if it doesn't exist
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("creating config directory: %w", err)
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("FRITZ_HOST=%s\n", c.Host))
+	sb.WriteString(fmt.Sprintf("FRITZ_PORT=%d\n", c.Port))
+	sb.WriteString(fmt.Sprintf("FRITZ_USERNAME=%s\n", c.Username))
+	sb.WriteString(fmt.Sprintf("FRITZ_PASSWORD=%s\n", c.Password))
+	if c.TLS {
+		sb.WriteString("FRITZ_TLS=true\n")
+	} else {
+		sb.WriteString("FRITZ_TLS=false\n")
+	}
+
+	// Write with 0600 permissions (read/write by owner only)
+	return os.WriteFile(path, []byte(sb.String()), 0600)
+}
+
 // getConfigDir returns the config directory path
 func getConfigDir() string {
 	// Check XDG_CONFIG_HOME first
@@ -30,21 +69,6 @@ func getConfigDir() string {
 		return filepath.Join(home, ".config", "fritzbox-mcp-server")
 	}
 	return ""
-}
-
-// getCacheDir returns the cache directory path for storing XML descriptors
-// This is exported so it can be used by cmd/fritz-mcp
-func getCacheDir() string {
-	// Check XDG_CACHE_HOME first (Linux/BSD)
-	if cacheHome := os.Getenv("XDG_CACHE_HOME"); cacheHome != "" {
-		return filepath.Join(cacheHome, "fritzbox-mcp-server")
-	}
-	// Fall back to ~/.cache (Linux/BSD)
-	if home := os.Getenv("HOME"); home != "" {
-		return filepath.Join(home, ".cache", "fritzbox-mcp-server")
-	}
-	// Fallback to current directory if no home directory found
-	return "xml"
 }
 
 // loadEnvFile reads a .env file and sets environment variables

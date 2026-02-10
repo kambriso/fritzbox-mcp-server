@@ -14,18 +14,20 @@ import (
 
 // server wraps the MCP server with TR-064 integration
 type mcpServer struct {
-	mcpServer *server.MCPServer
-	tr064     *client
-	registry  *registry
-	docsIndex *index
+	mcpServer   *server.MCPServer
+	tr064       *client
+	registry    *registry
+	docsIndex   *index
+	configError error // error if configuration is missing or invalid
 }
 
 // newServer creates a new MCP server with TR-064 integration
-func newServer(name, version string, tr064Client *client, registry *registry, docsIndex *index) *mcpServer {
+func newServer(name, version string, tr064Client *client, registry *registry, docsIndex *index, configErr error) *mcpServer {
 	s := &mcpServer{
-		tr064:     tr064Client,
-		registry:  registry,
-		docsIndex: docsIndex,
+		tr064:       tr064Client,
+		registry:    registry,
+		docsIndex:   docsIndex,
+		configError: configErr,
 	}
 
 	// Create MCP server
@@ -130,6 +132,9 @@ func (s *mcpServer) registerIntrospectionTools() {
 // registerAllServiceTools auto-registers tools for all services
 // Registers read-only GET actions with no input parameters as convenience tools
 func (s *mcpServer) registerAllServiceTools() {
+	if s.registry == nil {
+		return
+	}
 	for serviceType, serviceSpec := range s.registry.Services {
 		// Extract service name from URN (e.g., "DeviceInfo" from "urn:dslforum-org:service:DeviceInfo:1")
 		serviceName := extractServiceName(serviceType)
@@ -190,6 +195,10 @@ func isReadOnlyAction(actionName string) bool {
 // createActionHandler creates a handler for a no-argument action
 func (s *mcpServer) createActionHandler(serviceType, actionName string) func(map[string]interface{}) (*mcp.CallToolResult, error) {
 	return func(args map[string]interface{}) (*mcp.CallToolResult, error) {
+		if s.configError != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Action failed: %v", s.configError)), nil
+		}
+
 		// Get service and action specs
 		actionSpec, err := s.registry.getAction(serviceType, actionName)
 		if err != nil {
@@ -217,6 +226,10 @@ func (s *mcpServer) createActionHandler(serviceType, actionName string) func(map
 
 // handleListServices implements list_services
 func (s *mcpServer) handleListServices(args map[string]interface{}) (*mcp.CallToolResult, error) {
+	if s.configError != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Action failed: %v", s.configError)), nil
+	}
+
 	services := []map[string]string{}
 
 	for serviceType, serviceSpec := range s.registry.Services {
@@ -236,6 +249,10 @@ func (s *mcpServer) handleListServices(args map[string]interface{}) (*mcp.CallTo
 
 // handleListActions implements list_actions
 func (s *mcpServer) handleListActions(args map[string]interface{}) (*mcp.CallToolResult, error) {
+	if s.configError != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Action failed: %v", s.configError)), nil
+	}
+
 	serviceType, ok := args["service_type"].(string)
 	if !ok {
 		return mcp.NewToolResultError("service_type is required"), nil
@@ -276,6 +293,10 @@ func (s *mcpServer) handleListActions(args map[string]interface{}) (*mcp.CallToo
 
 // handleDescribeAction implements describe_action
 func (s *mcpServer) handleDescribeAction(args map[string]interface{}) (*mcp.CallToolResult, error) {
+	if s.configError != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Action failed: %v", s.configError)), nil
+	}
+
 	serviceType, ok := args["service_type"].(string)
 	if !ok {
 		return mcp.NewToolResultError("service_type is required"), nil
@@ -338,6 +359,10 @@ func (s *mcpServer) handleDescribeAction(args map[string]interface{}) (*mcp.Call
 
 // handleCallAction implements the generic call_action tool
 func (s *mcpServer) handleCallAction(args map[string]interface{}) (*mcp.CallToolResult, error) {
+	if s.configError != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Action failed: %v", s.configError)), nil
+	}
+
 	serviceType, ok := args["service_type"].(string)
 	if !ok {
 		return mcp.NewToolResultError("service_type is required"), nil

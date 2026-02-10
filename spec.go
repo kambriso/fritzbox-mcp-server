@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // argSpec represents a TR-064 action argument
@@ -113,95 +112,6 @@ type allowedValues struct {
 	Values []string `xml:"allowedValue"`
 }
 
-// fetchAllXML downloads all XML descriptors from FRITZ!Box (no auth required)
-// and saves them to the specified directory
-func fetchAllXML(ctx context.Context, baseURL, outputDir string) error {
-	// Create output directory
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return fmt.Errorf("creating output directory: %w", err)
-	}
-
-	// Step 1: Fetch tr64desc.xml
-	descURL := baseURL + "/tr64desc.xml"
-	descBody, err := fetchXML(ctx, descURL)
-	if err != nil {
-		return fmt.Errorf("fetching tr64desc.xml: %w", err)
-	}
-
-	// Save tr64desc.xml
-	descPath := filepath.Join(outputDir, "tr64desc.xml")
-	if err := os.WriteFile(descPath, descBody, 0644); err != nil {
-		return fmt.Errorf("writing tr64desc.xml: %w", err)
-	}
-
-	// Parse to get SCPD URLs
-	var root tr64Root
-	if err := xml.Unmarshal(descBody, &root); err != nil {
-		return fmt.Errorf("parsing tr64desc.xml: %w", err)
-	}
-
-	// Step 2: Recursively collect all services from root and nested devices
-	allServices := collectServicesRecursive(&root.Device)
-
-	// Step 3: Fetch all SCPD files
-	for _, svc := range allServices {
-		scpdURL := baseURL + svc.SCPDURL
-		scpdBody, err := fetchXML(ctx, scpdURL)
-		if err != nil {
-			// Log but don't fail - some services might not be available
-			fmt.Fprintf(os.Stderr, "Warning: failed to fetch %s: %v\n", scpdURL, err)
-			continue
-		}
-
-		// Save SCPD file (sanitize filename)
-		filename := sanitizeFilename(svc.SCPDURL)
-		scpdPath := filepath.Join(outputDir, filename)
-		if err := os.WriteFile(scpdPath, scpdBody, 0644); err != nil {
-			return fmt.Errorf("writing %s: %w", filename, err)
-		}
-	}
-
-	return nil
-}
-
-// fetchXML fetches XML content from a URL (no authentication)
-func fetchXML(ctx context.Context, url string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("fetching URL: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading response: %w", err)
-	}
-
-	return body, nil
-}
-
-// sanitizeFilename converts a URL path to a safe filename
-func sanitizeFilename(path string) string {
-	// Remove leading slash
-	name := strings.TrimPrefix(path, "/")
-	// Replace remaining slashes with underscores
-	name = strings.ReplaceAll(name, "/", "_")
-	// Ensure .xml extension
-	if !strings.HasSuffix(name, ".xml") {
-		name += ".xml"
-	}
-	return name
-}
-
 // loadFromFritz discovers all TR-064 services from the FRITZ!Box
 func loadFromFritz(ctx context.Context, baseURL string) (*registry, error) {
 	registry := &registry{
@@ -238,25 +148,37 @@ func loadFromFritz(ctx context.Context, baseURL string) (*registry, error) {
 	// Step 2: Recursively collect all services from root device and nested devices
 	allServices := collectServicesRecursive(&root.Device)
 
-	// Step 3: For each service, fetch and parse its SCPD
+	// Step 3: For each service, fetch and parse its SCPD in parallel
+	var wg sync.WaitGroup
+	errCh := make(chan error, len(allServices))
+	var mu sync.Mutex
+
 	for _, svc := range allServices {
-		serviceSpec := &serviceSpec{
-			ServiceType: svc.ServiceType,
-			ControlURL:  svc.ControlURL,
-			SCPDURL:     svc.SCPDURL,
-			Actions:     make(map[string]*actionSpec),
-		}
+		wg.Add(1)
+		go func(svc service) {
+			defer wg.Done()
+			serviceSpec := &serviceSpec{
+				ServiceType: svc.ServiceType,
+				ControlURL:  svc.ControlURL,
+				SCPDURL:     svc.SCPDURL,
+				Actions:     make(map[string]*actionSpec),
+			}
 
-		// Fetch SCPD
-		scpdURL := baseURL + svc.SCPDURL
-		if err := loadSCPD(ctx, scpdURL, serviceSpec); err != nil {
-			// Log but don't fail - some services might not be available
-			fmt.Fprintf(io.Discard, "Warning: failed to load SCPD for %s: %v\n", svc.ServiceType, err)
-			continue
-		}
+			// Fetch SCPD
+			scpdURL := baseURL + svc.SCPDURL
+			if err := loadSCPD(ctx, scpdURL, serviceSpec); err != nil {
+				// Log but don't fail - some services might not be available
+				return
+			}
 
-		registry.Services[svc.ServiceType] = serviceSpec
+			mu.Lock()
+			registry.Services[svc.ServiceType] = serviceSpec
+			mu.Unlock()
+		}(svc)
 	}
+
+	wg.Wait()
+	close(errCh)
 
 	return registry, nil
 }

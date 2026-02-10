@@ -29,6 +29,32 @@ Ask questions in plain language, analyze your network, manage devices, troublesh
 
 image::architecture.svg[Architecture Diagram]
 
+[mermaid]
+----
+flowchart TB
+  subgraph Cloud["INTERNET / CLOUD"]
+    AIService["AI Service<br/>(Anthropic, OpenAI, etc.)"]
+    ISP["Your ISP<br/>(Internet connection)"]
+  end
+
+  subgraph Home["YOUR HOME NETWORK"]
+    subgraph Exposed["Internet-Exposed Components"]
+      Agent["AI Agent<br/>(Claude Desktop, etc.)<br/><br/>On your computer<br/>⚠ Talks to cloud AI<br/>⚠ Has internet exposure"]
+      Fritz["FRITZ!Box<br/>Your router<br/><br/>⚠ Connects to internet<br/>⚠ Has internet exposure<br/>✓ No port forwarding"]
+    end
+
+    subgraph Local["100% Local - No Internet Exposure"]
+      MCP["MCP Server (This Software)<br/>+ Your FRITZ!Box Credentials<br/><br/>✓ Runs 100% locally - NEVER touches the internet<br/>✓ AI never sees credentials"]
+    end
+  end
+
+  Agent -->|Cloud AI traffic| AIService
+  Fritz -->|Internet uplink| ISP
+
+  Agent <--> |Local| MCP
+  Fritz <--> |Local only| MCP
+----
+
 The MCP server runs on your computer and acts as a secure bridge between AI agents (which run in the cloud) and your FRITZ!Box (which stays completely local).
 
 Your FRITZ!Box credentials are stored locally in a `.env` file on your computer.
@@ -106,32 +132,22 @@ chmod +x fritz-mcp
 
 Windows: Extract the ZIP file.
 
-==== 2. Create Configuration File
+==== 2. Interactive Setup
 
-Create a file named `.env` with your FRITZ!Box credentials:
+The easiest way to configure your FRITZ!Box is using the interactive setup mode.
+This will automatically discover your router on the network and guide you through the configuration process.
 
 [source,bash]
 ----
-FRITZ_HOST=fritz.box
-FRITZ_USERNAME=your-username
-FRITZ_PASSWORD=your-password
+./fritz-mcp --setup
 ----
 
-Save this file in one of these locations:
+The setup mode will:
 
-Windows:: `%USERPROFILE%\.config\fritzbox-mcp-server\.env`
-macOS:: `~/.config/fritzbox-mcp-server/.env`
-Linux:: `~/.config/fritzbox-mcp-server/.env`
-
-Or place it in the same folder as the binary for testing.
-
-[WARNING]
-====
-This file contains your password.
-Keep it secure and never commit it to version control.
-
-On Linux/macOS, restrict access: `chmod 600 ~/.config/fritzbox-mcp-server/.env`
-====
+1. Discover: Find FRITZ!Box devices using SSDP on your local network.
+2. Identify: Automatically detect the Mesh Master (gateway).
+3. Configure: Prompt for your host, username, password, and TLS preference.
+4. Secure: Save credentials to a .env file with 0600 permissions (read/write only by you).
 
 ==== 3. FRITZ!Box User Permissions
 
@@ -142,7 +158,7 @@ In the FRITZ!Box web interface (http://fritz.box):
 1. Go to System → FRITZ!Box-Benutzer → [Your User] → Berechtigungen
 2. Enable: "FRITZ!Box-Einstellungen" (or "The user can view and edit all FRITZ!Box settings")
 
-==== 4. Configure Claude Desktop
+==== 4. Configure Claude Desktop (or similar/ analog for your preferred AI assistant)
 
 Edit your Claude Desktop config file:
 
@@ -691,16 +707,18 @@ For byte-for-byte reproducible local builds, use `make dists-container` which bu
 go test -v ./...
 ----
 
-==== XML Fetching
+==== Automated Tests & Benchmarks
 
-Fetch service descriptors without authentication:
+The project includes a comprehensive test suite and a performance benchmark.
 
 [source,bash]
 ----
-./fritz-mcp --fetch-xml
-----
+# Run all tests
+go test -v ./...
 
-This downloads service descriptors to `xml/` directory for offline analysis.
+# Run the discovery benchmark
+go test -v -bench=. .
+----
 
 === Development Workflow
 

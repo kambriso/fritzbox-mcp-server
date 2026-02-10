@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	_ "embed"
 	"encoding/json"
@@ -10,6 +11,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -29,16 +33,16 @@ var (
 )
 
 var (
-	fetchXMLOnly = flag.Bool("fetch-xml", false, "Fetch TR-064 XML files from network-attached FRITZ!Box and exit")
-	xmlDir       = flag.String("xml-dir", "", "Directory to store fetched XML files (default: ~/.cache/fritzbox-mcp-server)")
-	debug        = flag.Bool("debug", false, "Enable verbose debug logging")
-	showVersion  = flag.Bool("version", false, "Show version information and exit")
+	xmlDir      = flag.String("xml-dir", "", "Directory to store fetched XML files (deprecated, now ignored)")
+	debug       = flag.Bool("debug", false, "Enable verbose debug logging")
+	showVersion = flag.Bool("version", false, "Show version information and exit")
 	// CLI execution mode
 	executeMode  = flag.Bool("execute", false, "Execute a single action and exit (CLI mode)")
 	serviceType  = flag.String("service", "", "Service type for CLI execution (e.g., urn:dslforum-org:service:DeviceInfo:1)")
 	actionName   = flag.String("action", "", "Action name for CLI execution (e.g., GetInfo)")
 	actionArgs   = flag.String("args", "{}", "Action arguments as JSON object for CLI execution")
 	executeQuiet = flag.Bool("quiet", false, "Suppress log output in execute mode (only print result)")
+	setupMode    = flag.Bool("setup", false, "Interactive setup to discover FRITZ!Box and create .env file")
 )
 
 func main() {
@@ -61,15 +65,11 @@ func main() {
 
 func run() error {
 	// Set up logging
-	if *executeQuiet {
-		log.SetOutput(os.Stderr)
-	} else {
-		log.SetOutput(os.Stderr) // MCP uses stdout for protocol, stderr for logs
-	}
+	log.SetOutput(os.Stderr) // MCP uses stdout for protocol, stderr for logs
 
-	// Set default XML directory if not specified
-	if *xmlDir == "" {
-		*xmlDir = getCacheDir()
+	// If --setup flag is set, run interactive setup
+	if *setupMode {
+		return runSetupMode()
 	}
 
 	ctx := context.Background()
@@ -79,72 +79,39 @@ func run() error {
 		return runExecuteMode(ctx)
 	}
 
-	// If --fetch-xml flag is set, only fetch XML and exit (no auth required)
-	if *fetchXMLOnly {
-		// Try to load minimal config (only FRITZ_HOST needed)
-		cfg, _ := load()
-		var baseURL string
-		if cfg == nil {
-			// load failed, try environment directly
-			host := os.Getenv("FRITZ_HOST")
-			if host == "" {
-				return fmt.Errorf("FRITZ_HOST is required (set in .env or environment)")
-			}
-			port := os.Getenv("FRITZ_PORT")
-			if port == "" {
-				port = "49000"
-			}
-			baseURL = fmt.Sprintf("http://%s:%s", host, port)
-		} else {
-			baseURL = cfg.baseURL()
-		}
-
-		log.Printf("Fetching TR-064 XML files from %s to %s/", baseURL, *xmlDir)
-		if err := fetchAllXML(ctx, baseURL, *xmlDir); err != nil {
-			return fmt.Errorf("failed to fetch XML: %w", err)
-		}
-		log.Println("✓ XML files fetched successfully")
-
-		// List downloaded files
-		entries, err := os.ReadDir(*xmlDir)
-		if err != nil {
-			return fmt.Errorf("failed to read XML directory: %w", err)
-		}
-
-		log.Printf("Downloaded %d files:", len(entries))
-		for _, entry := range entries {
-			info, _ := entry.Info()
-			if info != nil {
-				log.Printf("  - %s (%d bytes)", entry.Name(), info.Size())
-			}
-		}
-		return nil
-	}
-
 	// Step 1: load full configuration (requires auth credentials)
-	log.Println("Loading configuration...")
+	var configErr error
 	cfg, err := load()
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		configErr = fmt.Errorf("No configuration found. Please run `%s --setup` in your terminal to discover and configure your device.", os.Args[0])
+		log.Printf("Warning: %v", configErr)
 	}
-	log.Printf("Configured for FRITZ!Box at %s", cfg.baseURL())
 
-	// Step 2: Create TR-064 client
-	log.Println("Creating TR-064 client...")
-	tr064Client := newClient(cfg.baseURL(), cfg.Username, cfg.Password, *debug)
+	// Step 2-4: Disover services (only if config is valid)
+	var tr064Client *client
+	var registry *registry
 
-	// Step 3: Discover services from FRITZ!Box
-	log.Println("Discovering TR-064 services from FRITZ!Box...")
-	registry, err := loadFromFritz(ctx, cfg.baseURL())
-	if err != nil {
-		return fmt.Errorf("failed to load TR-064 services: %w", err)
-	}
-	log.Printf("Discovered %d services", len(registry.Services))
+	if configErr == nil {
+		log.Printf("Configured for FRITZ!Box at %s", cfg.baseURL())
 
-	// Step 4: Optional - call DeviceInfo:GetInfo to log device details
-	log.Println("Fetching device information...")
-	if err := logDeviceInfo(ctx, tr064Client, registry); err != nil {
-		log.Printf("Warning: could not get device info: %v", err)
+		// Create TR-064 client
+		tr064Client = newClient(cfg.baseURL(), cfg.Username, cfg.Password, *debug)
+
+		// Discover services from FRITZ!Box
+		log.Println("Discovering TR-064 services from FRITZ!Box...")
+		registry, err = loadFromFritz(ctx, cfg.baseURL())
+		if err != nil {
+			configErr = fmt.Errorf("failed to load TR-064 services: %w", err)
+			log.Printf("Warning: %v", configErr)
+		} else {
+			log.Printf("Discovered %d services", len(registry.Services))
+
+			// Optional - call DeviceInfo:GetInfo to log device details
+			log.Println("Fetching device information...")
+			if err := logDeviceInfo(ctx, tr064Client, registry); err != nil {
+				log.Printf("Warning: could not get device info: %v", err)
+			}
+		}
 	}
 
 	// Step 5: Create documentation index
@@ -153,10 +120,132 @@ func run() error {
 
 	// Step 6: Create and start MCP server
 	log.Printf("Starting MCP server v%s...\n", version)
-	mcpSrv := newServer(serverName, version, tr064Client, registry, docsIndex)
+	mcpSrv := newServer(serverName, version, tr064Client, registry, docsIndex, configErr)
 
 	log.Println("MCP server ready")
 	return server.ServeStdio(mcpSrv.getMCPServer())
+}
+
+// runSetupMode runs the interactive setup flow
+func runSetupMode() error {
+	fmt.Println("=== FRITZ!Box MCP Server Setup ===")
+
+	// Check if already configured
+	if path := configFile(); path != "" {
+		fmt.Printf("Existing configuration found at %s.\n", path)
+		fmt.Print("Do you want to overwrite it? [y/N]: ")
+		var resp string
+		fmt.Scanln(&resp)
+		if strings.ToLower(resp) != "y" {
+			fmt.Println("Aborted.")
+			return nil
+		}
+	}
+
+	ctx := context.Background()
+
+	// 1. Discovery
+	fmt.Print("Searching for FRITZ!Box devices (2s)... ")
+	results, err := discoverFritzBox(ctx, 2*time.Second)
+	if err != nil {
+		return fmt.Errorf("discovery failed: %w", err)
+	}
+
+	if len(results) == 0 {
+		fmt.Print("Not found. Retrying with longer timeout (10s)... ")
+		results, err = discoverFritzBox(ctx, 10*time.Second)
+		if err != nil {
+			return fmt.Errorf("discovery retry failed: %w", err)
+		}
+	}
+
+	if len(results) == 0 {
+		fmt.Println("\nNo FRITZ!Box devices found. Please enter details manually.")
+	}
+
+	var selected *discoveryResult
+	if len(results) == 1 {
+		selected = &results[0]
+		fmt.Printf("\nFound %s at %s", selected.Model, selected.IP)
+		if selected.IsMaster {
+			fmt.Print(" [Mesh Master]")
+		}
+		fmt.Println()
+	} else if len(results) > 1 {
+		fmt.Println("\nMultiple FRITZ!Box devices found:")
+		for i, res := range results {
+			masterHint := ""
+			if res.IsMaster {
+				masterHint = " [Detected Mesh Master]"
+			}
+			fmt.Printf("%d. %s at %s%s\n", i+1, res.Model, res.IP, masterHint)
+		}
+		fmt.Print("Select device [1]: ")
+		var idx int
+		fmt.Scanln(&idx)
+		if idx < 1 || idx > len(results) {
+			idx = 1
+		}
+		selected = &results[idx-1]
+	}
+
+	// 2. Credentials
+	reader := bufio.NewReader(os.Stdin)
+	cfg := &config{
+		Host: "192.168.178.1",
+		Port: 49000,
+	}
+
+	if selected != nil {
+		cfg.Host = selected.IP
+	} else {
+		fmt.Printf("FRITZ!Box IP [%s]: ", cfg.Host)
+		line, _ := reader.ReadString('\n')
+		line = strings.TrimSpace(line)
+		if line != "" {
+			cfg.Host = line
+		}
+	}
+
+	fmt.Printf("Username [mcp]: ")
+	username, _ := reader.ReadString('\n')
+	username = strings.TrimSpace(username)
+	if username == "" {
+		username = "mcp"
+	}
+	cfg.Username = username
+
+	fmt.Printf("Password: ")
+	password, _ := reader.ReadString('\n')
+	cfg.Password = strings.TrimSpace(password)
+
+	fmt.Printf("Use TLS (HTTPS) [n/Y]: ")
+	tlsResp, _ := reader.ReadString('\n')
+	tlsResp = strings.TrimSpace(strings.ToLower(tlsResp))
+	if tlsResp == "" || tlsResp == "y" {
+		cfg.TLS = true
+		cfg.Port = 4433
+	}
+
+	// 3. Save
+	targetPath := ".env"
+	if configDir := getConfigDir(); configDir != "" {
+		targetPath = filepath.Join(configDir, ".env")
+		// Ask if user wants it in global or local dir
+		fmt.Printf("Save configuration to %s? [Y/n]: ", targetPath)
+		saveResp, _ := reader.ReadString('\n')
+		if strings.TrimSpace(strings.ToLower(saveResp)) == "n" {
+			targetPath = ".env"
+		}
+	}
+
+	if err := cfg.save(targetPath); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+
+	fmt.Printf("\n✓ Configuration saved to %s (permissions 0600)\n", targetPath)
+	fmt.Println("Setup complete. You can now start the MCP server.")
+	return nil
 }
 
 // runExecuteMode executes a single action in CLI mode and exits
