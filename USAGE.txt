@@ -2,11 +2,23 @@ FRITZ!Box MCP Server - Usage Guide
 
 MODES:
   1. MCP Server Mode (default)    - Interactive protocol server for AI agents
-  2. CLI Execution Mode           - Execute single action and exit
+  2. Setup Mode                   - Interactive discovery and configuration
+  3. CLI Execution Mode           - Execute single action and exit
 
 === MCP SERVER MODE (default) ===
 
 When invoked without flags, runs as an MCP protocol server via stdin/stdout.
+
+=== SETUP MODE ===
+
+Usage:
+  $ fritz-mcp --setup
+
+Features:
+  - Automaticaly discovers FRITZ!Box devices using SSDP
+  - Identifies the Mesh Master (gateway)
+  - Guides you through host, credential, and TLS setup
+  - Saves configuration to .env with secure 0600 permissions
 
 === CLI EXECUTION MODE ===
 
@@ -50,10 +62,6 @@ Examples:
       --args '"'"'{"NewIPv4Address":"192.168.178.35","NewDisallow":"1"}'"'"' \
       --quiet' | at now + 20 minutes
 
-  # Daily cron job (block gaming console 22:00-06:00)
-  # Crontab: 0 22 * * * fritz-mcp --execute --service ... --quiet
-  # Crontab: 0 6  * * * fritz-mcp --execute --service ... --args '{"NewDisallow":"0"}' --quiet
-
 Discovery:
   Use MCP mode to discover available services and actions:
   - list_services     List all services
@@ -61,9 +69,10 @@ Discovery:
   - describe_action   Get action parameters
 
 OTHER OPTIONS:
+  --setup               Run interactive setup
   --version             Show version and exit
   --debug               Enable verbose debug logging
-  --xml-dir <path>      XML cache directory (default: ~/.cache/fritzbox-mcp-server)
+  --xml-dir <path>      Ignored (metadata is now fetched dynamically)
 
 CONFIGURATION:
   Credentials are read from .env file in:
@@ -80,15 +89,12 @@ CONFIGURATION:
 TIME-DELAYED ACTIONS (AI Agent Feature):
   When using with AI agents, you can request time-delayed actions:
 
-  User: "Block Kevin's Nintendo Switch in 20 minutes"
+  User: "Block device in 20 minutes"
 
   The AI agent will:
   1. Identify the device
   2. Create an at job: echo 'fritz-mcp --execute ...' | at now + 20 minutes
   3. Confirm with job ID for cancellation
-
-  This enables parental controls, scheduled maintenance, and automation
-  that no web GUI can provide.
 
 MORE INFO:
   Documentation: https://github.com/kambriso/fritzbox-mcp-server
