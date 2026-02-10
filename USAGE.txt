@@ -72,19 +72,12 @@ OTHER OPTIONS:
   --setup               Run interactive setup
   --version             Show version and exit
   --debug               Enable verbose debug logging
-  --xml-dir <path>      Ignored (metadata is now fetched dynamically)
 
 CONFIGURATION:
-  Credentials are read from .env file in:
-    1. Current directory (./.env)
-    2. ~/.config/fritzbox-mcp-server/.env
-    3. $XDG_CONFIG_HOME/fritzbox-mcp-server/.env
-
-  Required .env format:
-    FRITZ_HOST=fritz.box
-    FRITZ_PORT=49000
-    FRITZ_USERNAME=your-username
-    FRITZ_PASSWORD=your-password
+  Configuration is managed via the --setup command.
+  Credentials are stored securely in your global config directory:
+    ~/.config/fritzbox-mcp-server/.env (on Linux/macOS)
+    %APPDATA%/fritzbox-mcp-server/.env (on Windows)
 
 TIME-DELAYED ACTIONS (AI Agent Feature):
   When using with AI agents, you can request time-delayed actions:

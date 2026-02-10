@@ -21,11 +21,7 @@ type config struct {
 
 // configFile returns the path to the config file if it exists
 func configFile() string {
-	// 1. Check current directory
-	if _, err := os.Stat(".env"); err == nil {
-		return ".env"
-	}
-	// 2. Check global config directory
+	// Check global config directory
 	if configDir := getConfigDir(); configDir != "" {
 		globalEnv := filepath.Join(configDir, ".env")
 		if _, err := os.Stat(globalEnv); err == nil {
@@ -96,17 +92,12 @@ func loadEnvFile(path string) error {
 
 // load reads configuration from .env file and environment variables
 // Returns error if required fields are missing
-// Looks for .env in:
-// 1. Current directory (.env)
-// 2. Global config directory (~/.config/fritzbox-mcp-server/.env)
+// Looks for .env in the global config directory (~/.config/fritzbox-mcp-server/.env)
 func load() (*config, error) {
-	// Try loading from current directory first (for development/testing)
-	if err := loadEnvFile(".env"); err != nil {
-		// If not found in current dir, try global config
-		if configDir := getConfigDir(); configDir != "" {
-			globalEnv := filepath.Join(configDir, ".env")
-			_ = loadEnvFile(globalEnv)
-		}
+	// Load from global config
+	if configDir := getConfigDir(); configDir != "" {
+		globalEnv := filepath.Join(configDir, ".env")
+		_ = loadEnvFile(globalEnv)
 	}
 
 	cfg := &config{

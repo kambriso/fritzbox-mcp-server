@@ -33,7 +33,6 @@ var (
 )
 
 var (
-	xmlDir      = flag.String("xml-dir", "", "Directory to store fetched XML files (deprecated, now ignored)")
 	debug       = flag.Bool("debug", false, "Enable verbose debug logging")
 	showVersion = flag.Bool("version", false, "Show version information and exit")
 	// CLI execution mode
