@@ -2,6 +2,27 @@
 
 All notable changes to the FRITZ!Box MCP Server project will be documented in this file.
 
+== link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.8.0[0.8.0] - 2026-02-10
+
+=== Added
+- Interactive setup command (--setup) with automatic SSDP discovery
+- Support for detecting FritzBox Mesh Master during setup
+- Secure credential handling with 0600 file permissions
+- Parallelized TR-064 service discovery for near-instant startup
+- Robust Go unit test suite for MCP logic and discovery
+- New architecture diagram using Graphviz (.dot -> .svg)
+
+=== Changed
+- Migrated configuration logic to exclusively use global XDG directory
+- Standardized license to Kambrium Source-Available License (KSAL-1.0)
+- Improved USAGE.txt with setup-first documentation
+- Removed deprecated --xml-dir flag and legacy caching logic
+- Documentation clarified and all bold formatting removed
+
+=== Fixed
+- Nil pointer panic during server initialization in unconfigured state
+- Corrected line endings in SSDP discovery responses for broader compatibility
+
 == link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.7.0[0.7.0] - 2026-01-26
 
 === Added
