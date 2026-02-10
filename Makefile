@@ -39,7 +39,13 @@ test: ## Run tests
 clean: ## Remove build artifacts
 	rm -f $(BINARY)
 	rm -rf $(BUILD_DIR)/ $(DIST_DIR)/
+	rm -f arch.svg architecture.svg architecture.mmd
 	$(GO) clean
+
+arch.svg: arch.dot
+	dot -Tsvg $< -o $@
+
+README.adoc README-de.adoc: arch.svg
 
 .PHONY: install
 install: ## Install to GOPATH/bin

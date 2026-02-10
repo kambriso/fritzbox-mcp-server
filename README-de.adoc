@@ -27,7 +27,7 @@ Stelle Fragen in natürlicher Sprache, analysiere dein Netzwerk, verwalte Gerät
 
 === So funktioniert es (Sicherheitsarchitektur)
 
-image::architecture.svg[Architektur-Diagramm]
+image::arch.svg[Architektur-Diagramm]
 
 Der MCP-Server läuft auf deinem Computer und fungiert als sichere Brücke zwischen KI-Agenten (die in der Cloud laufen) und deiner FRITZ!Box (die komplett lokal bleibt).
 
@@ -106,32 +106,22 @@ chmod +x fritz-mcp
 
 Windows: Entpacke die ZIP-Datei.
 
-==== 2. Konfigurationsdatei erstellen
+==== 2. Interaktives Setup
 
-Erstelle eine Datei namens `.env` mit deinen FRITZ!Box-Zugangsdaten:
+Der einfachste Weg, deine FRITZ!Box zu konfigurieren, ist der interaktive Setup-Modus.
+Dieser findet deinen Router automatisch im Netzwerk und führt dich durch den Konfigurationsprozess.
 
 [source,bash]
 ----
-FRITZ_HOST=fritz.box
-FRITZ_USERNAME=dein-benutzername
-FRITZ_PASSWORD=dein-passwort
+./fritz-mcp --setup
 ----
 
-Speichere diese Datei an einem dieser Orte:
+Der Setup-Modus wird:
 
-Windows:: `%USERPROFILE%\.config\fritzbox-mcp-server\.env`
-macOS:: `~/.config/fritzbox-mcp-server/.env`
-Linux:: `~/.config/fritzbox-mcp-server/.env`
-
-Oder lege sie zum Testen im gleichen Ordner wie die Binärdatei ab.
-
-[WARNING]
-====
-Diese Datei enthält dein Passwort.
-Halte sie sicher und committe sie niemals in die Versionsverwaltung.
-
-Unter Linux/macOS: Zugriff beschränken mit `chmod 600 ~/.config/fritzbox-mcp-server/.env`
-====
+1. Discover: FRITZ!Box-Geräte mittels SSDP in deinem lokalen Netzwerk finden.
+2. Identify: Automatisch den Mesh Master (Gateway) erkennen.
+3. Configure: Dich nach Host, Benutzername, Passwort und TLS-Präferenz fragen.
+4. Secure: Die Zugangsdaten in einer .env Datei mit 0600 Berechtigungen speichern (nur für dich les-/schreibbar).
 
 ==== 3. FRITZ!Box Benutzerberechtigungen
 

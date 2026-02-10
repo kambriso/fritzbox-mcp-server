@@ -27,29 +27,8 @@ Ask questions in plain language, analyze your network, manage devices, troublesh
 
 === How it works (Security Architecture)
 
-image::architecture.svg[Architecture Diagram]
+image::arch.svg[Architecture Diagram]
 
-[mermaid]
-----
-flowchart TB
-  subgraph Cloud["INTERNET / CLOUD"]
-    AIService["AI Service<br/>(Anthropic, OpenAI, etc.)"]
-    ISP["Your ISP<br/>(Internet connection)"]
-  end
-
-  subgraph Home["YOUR HOME NETWORK"]
-    subgraph Exposed["Internet-Exposed Components"]
-      Agent["AI Agent<br/>(Claude Desktop, etc.)<br/><br/>On your computer<br/>⚠ Talks to cloud AI<br/>⚠ Has internet exposure"]
-      Fritz["FRITZ!Box<br/>Your router<br/><br/>⚠ Connects to internet<br/>⚠ Has internet exposure<br/>✓ No port forwarding"]
-    end
-
-    subgraph Local["100% Local - No Internet Exposure"]
-      MCP["MCP Server (This Software)<br/>+ Your FRITZ!Box Credentials<br/><br/>✓ Runs 100% locally - NEVER touches the internet<br/>✓ AI never sees credentials"]
-    end
-  end
-
-  Agent -->|Cloud AI traffic| AIService
-  Fritz -->|Internet uplink| ISP
 
   Agent <--> |Local| MCP
   Fritz <--> |Local only| MCP
