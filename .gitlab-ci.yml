@@ -1,5 +1,4 @@
 variables:
-  RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/fritzbox-mcp-server/${CI_COMMIT_TAG}"
 
 test:
@@ -10,6 +9,7 @@ test:
     - when: always
   script:
     - make tidy
+    - make build
     - make test
 
 build:
@@ -54,16 +54,10 @@ build:
           --upload-file "$f" \
           "${PACKAGE_REGISTRY_URL}/$(basename $f)"
       done
-    # Upload artifacts-metadata.json to Package Registry
-    - |
-      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file artifacts-metadata.json \
-        "${PACKAGE_REGISTRY_URL}/artifacts-metadata.json"
   artifacts:
     expire_in: 1 day
     paths:
       - release/
-      - artifacts-metadata.json
 
 release:
   image: registry.gitlab.com/gitlab-org/cli:latest
