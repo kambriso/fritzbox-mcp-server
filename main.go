@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -128,13 +130,16 @@ func run() error {
 // runSetupMode runs the interactive setup flow
 func runSetupMode() error {
 	fmt.Println("=== FRITZ!Box MCP Server Setup ===")
+	reader := bufio.NewReader(os.Stdin)
 
 	// Check if already configured
 	if path := configFile(); path != "" {
 		fmt.Printf("Existing configuration found at %s.\n", path)
 		fmt.Print("Do you want to overwrite it? [y/N]: ")
-		var resp string
-		fmt.Scanln(&resp)
+		resp, err := readTrimmedLine(reader)
+		if err != nil {
+			return fmt.Errorf("failed to read overwrite confirmation: %w", err)
+		}
 		if strings.ToLower(resp) != "y" {
 			fmt.Println("Aborted.")
 			return nil
@@ -180,8 +185,17 @@ func runSetupMode() error {
 			fmt.Printf("%d. %s at %s%s\n", i+1, res.Model, res.IP, masterHint)
 		}
 		fmt.Print("Select device [1]: ")
-		var idx int
-		fmt.Scanln(&idx)
+		idx := 1
+		line, err := readTrimmedLine(reader)
+		if err != nil {
+			return fmt.Errorf("failed to read device selection: %w", err)
+		}
+		if line != "" {
+			parsed, err := strconv.Atoi(line)
+			if err == nil {
+				idx = parsed
+			}
+		}
 		if idx < 1 || idx > len(results) {
 			idx = 1
 		}
@@ -189,7 +203,6 @@ func runSetupMode() error {
 	}
 
 	// 2. Credentials
-	reader := bufio.NewReader(os.Stdin)
 	cfg := &config{
 		Host: "192.168.178.1",
 		Port: 49000,
@@ -199,28 +212,38 @@ func runSetupMode() error {
 		cfg.Host = selected.IP
 	} else {
 		fmt.Printf("FRITZ!Box IP [%s]: ", cfg.Host)
-		line, _ := reader.ReadString('\n')
-		line = strings.TrimSpace(line)
+		line, err := readTrimmedLine(reader)
+		if err != nil {
+			return fmt.Errorf("failed to read FRITZ!Box IP: %w", err)
+		}
 		if line != "" {
 			cfg.Host = line
 		}
 	}
 
 	fmt.Printf("Username [mcp]: ")
-	username, _ := reader.ReadString('\n')
-	username = strings.TrimSpace(username)
+	username, err := readTrimmedLine(reader)
+	if err != nil {
+		return fmt.Errorf("failed to read username: %w", err)
+	}
 	if username == "" {
 		username = "mcp"
 	}
 	cfg.Username = username
 
 	fmt.Printf("Password: ")
-	password, _ := reader.ReadString('\n')
-	cfg.Password = strings.TrimSpace(password)
+	password, err := readTrimmedLine(reader)
+	if err != nil {
+		return fmt.Errorf("failed to read password: %w", err)
+	}
+	cfg.Password = password
 
 	fmt.Printf("Use TLS (HTTPS) [n/Y]: ")
-	tlsResp, _ := reader.ReadString('\n')
-	tlsResp = strings.TrimSpace(strings.ToLower(tlsResp))
+	tlsResp, err := readTrimmedLine(reader)
+	if err != nil {
+		return fmt.Errorf("failed to read TLS preference: %w", err)
+	}
+	tlsResp = strings.ToLower(tlsResp)
 	if tlsResp == "" || tlsResp == "y" {
 		cfg.TLS = true
 		cfg.Port = 4433
@@ -232,8 +255,11 @@ func runSetupMode() error {
 		targetPath = filepath.Join(configDir, ".env")
 		// Ask if user wants it in global or local dir
 		fmt.Printf("Save configuration to %s? [Y/n]: ", targetPath)
-		saveResp, _ := reader.ReadString('\n')
-		if strings.TrimSpace(strings.ToLower(saveResp)) == "n" {
+		saveResp, err := readTrimmedLine(reader)
+		if err != nil {
+			return fmt.Errorf("failed to read save target confirmation: %w", err)
+		}
+		if strings.ToLower(saveResp) == "n" {
 			targetPath = ".env"
 		}
 	}
@@ -245,6 +271,17 @@ func runSetupMode() error {
 	fmt.Printf("\n✓ Configuration saved to %s (permissions 0600)\n", targetPath)
 	fmt.Println("Setup complete. You can now start the MCP server.")
 	return nil
+}
+
+func readTrimmedLine(reader *bufio.Reader) (string, error) {
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		if err == io.EOF && line != "" {
+			return strings.TrimSpace(line), nil
+		}
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
 }
 
 // runExecuteMode executes a single action in CLI mode and exits
