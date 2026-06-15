@@ -132,13 +132,16 @@ In the FRITZ!Box web interface (http://fritz.box):
 1. Go to System → FRITZ!Box-Benutzer → [Your User] → Berechtigungen
 2. Enable: "FRITZ!Box-Einstellungen" (or "The user can view and edit all FRITZ!Box settings")
 
-==== 4. Configure Claude Desktop (or similar/ analog for your preferred AI assistant)
+==== 4. Configure your MCP client
 
-Edit your Claude Desktop config file:
+For Windows and macOS, Claude Desktop is the most direct option.
+As of June 15, 2026, Anthropic does not provide an official Claude Desktop app for Linux.
+On Linux, use any MCP-compatible client or editor integration that can launch a local stdio server and add `fritz-mcp` there with the same command shown below.
+
+Claude Desktop config paths:
 
 Windows:: `%APPDATA%\Claude\claude_desktop_config.json`
 macOS:: `~/Library/Application Support/Claude/claude_desktop_config.json`
-Linux:: `~/.config/claude/claude_desktop_config.json`
 
 Add the server:
 
@@ -159,10 +162,10 @@ Windows: `C:\\Users\\YourName\\path\\to\\fritz-mcp.exe` (note the double backsla
 
 macOS/Linux with automated install: `~/.local/bin/fritz-mcp`
 
-macOS/Linux with manual install: Absolute path to where you placed the binary, e.g., `/Users/yourname/bin/fritz-mcp`
+macOS/Linux with manual install: Absolute path to where you placed the binary, e.g. `/Users/yourname/bin/fritz-mcp`
 ====
 
-Restart Claude Desktop.
+Restart your MCP client after config changes.
 
 === What can you do?
 
@@ -280,13 +283,15 @@ Verify credentials in `.env` file.
 
 Ensure your FRITZ!Box user has full settings permission enabled.
 
-==== Claude Desktop doesn't see the server
+==== Your MCP client doesn't see the server
 
-Verify the path in `claude_desktop_config.json` is absolute and correct.
+If you use Claude Desktop on Windows or macOS, verify the path in `claude_desktop_config.json` is absolute and correct.
+
+On Linux, verify the command/path in your MCP client's server configuration is absolute and correct.
 
 Windows users: Use double backslashes in paths.
 
-Restart Claude Desktop after config changes.
+Restart your MCP client after config changes.
 
 ==== Permission errors
 

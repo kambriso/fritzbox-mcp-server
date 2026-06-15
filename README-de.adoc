@@ -132,13 +132,16 @@ In der FRITZ!Box Web-Oberfläche (http://fritz.box):
 1. Gehe zu System → FRITZ!Box-Benutzer → [Dein Benutzer] → Berechtigungen
 2. Aktiviere: "FRITZ!Box-Einstellungen" (oder "Der Benutzer kann alle Einstellungen der FRITZ!Box sehen und bearbeiten")
 
-==== 4. Claude Desktop konfigurieren
+==== 4. Deinen MCP-Client konfigurieren
 
-Bearbeite deine Claude Desktop Konfigurationsdatei:
+Für Windows und macOS ist Claude Desktop die naheliegendste Option.
+Stand 15. Juni 2026 bietet Anthropic keine offizielle Claude-Desktop-App für Linux an.
+Unter Linux solltest du einen MCP-kompatiblen Client oder eine Editor-Integration verwenden, die einen lokalen stdio-Server starten kann, und dort `fritz-mcp` mit demselben unten gezeigten Kommando eintragen.
+
+Claude-Desktop-Konfigurationspfade:
 
 Windows:: `%APPDATA%\Claude\claude_desktop_config.json`
 macOS:: `~/Library/Application Support/Claude/claude_desktop_config.json`
-Linux:: `~/.config/claude/claude_desktop_config.json`
 
 Füge den Server hinzu:
 
@@ -162,7 +165,7 @@ macOS/Linux mit automatischer Installation: `~/.local/bin/fritz-mcp`
 macOS/Linux mit manueller Installation: Absoluter Pfad zur Binärdatei, z.B. `/Users/deinname/bin/fritz-mcp`
 ====
 
-Starte Claude Desktop neu.
+Starte deinen MCP-Client nach Konfigurationsänderungen neu.
 
 === Was kannst du damit machen?
 
@@ -280,13 +283,15 @@ ping fritz.box
 
 Stelle sicher, dass dein FRITZ!Box-Benutzer die volle Einstellungs-Berechtigung hat.
 
-==== Claude Desktop findet den Server nicht
+==== Dein MCP-Client findet den Server nicht
 
-Überprüfe ob der Pfad in `claude_desktop_config.json` absolut und korrekt ist.
+Wenn du Claude Desktop unter Windows oder macOS verwendest, prüfe, ob der Pfad in `claude_desktop_config.json` absolut und korrekt ist.
+
+Unter Linux prüfe, ob Kommando und Pfad in der Server-Konfiguration deines MCP-Clients absolut und korrekt sind.
 
 Windows: Verwende doppelte Backslashes in Pfaden.
 
-Starte Claude Desktop nach Konfigurationsänderungen neu.
+Starte deinen MCP-Client nach Konfigurationsänderungen neu.
 
 ==== Berechtigungsfehler
 
