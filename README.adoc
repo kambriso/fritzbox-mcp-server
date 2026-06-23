@@ -531,7 +531,7 @@ make help  # See available build targets
 
 ==== Configuration
 
-Create `.env` file with your FRITZ!Box credentials:
+Create a `.env` file with your FRITZ!Box credentials:
 
 [source,bash]
 ----
@@ -548,6 +548,16 @@ FRITZ_PORT=49000              # Service port (default: 49000)
 FRITZ_USERNAME=your-username  # FRITZ!Box username
 FRITZ_PASSWORD=your-password  # FRITZ!Box password
 ----
+
+Configuration is loaded in the following order (each level can supplement or
+override the previous):
+
+1. **Global config**: `~/.config/fritzbox-mcp-server/.env` (created by `--setup`)
+2. **Local `.env`**: `.env` in the current working directory (recommended for development)
+3. **Environment variables**: OS-level variables (highest priority)
+
+This means a local `.env` works for development, while `--setup` stores credentials
+globally for production use with MCP clients.
 
 ==== FRITZ!Box User Permissions
 

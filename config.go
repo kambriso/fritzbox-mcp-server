@@ -90,15 +90,21 @@ func loadEnvFile(path string) error {
 	return nil
 }
 
-// load reads configuration from .env file and environment variables
-// Returns error if required fields are missing
-// Looks for .env in the global config directory (~/.config/fritzbox-mcp-server/.env)
+// load reads configuration from .env files and environment variables.
+// Load order (later sources override earlier ones for unset variables):
+//  1. Global config: ~/.config/fritzbox-mcp-server/.env
+//  2. Local .env:    .env in the current working directory
+//  3. OS environment variables (always take precedence)
+// Returns error if required fields are missing.
 func load() (*config, error) {
 	// Load from global config
 	if configDir := getConfigDir(); configDir != "" {
 		globalEnv := filepath.Join(configDir, ".env")
 		_ = loadEnvFile(globalEnv)
 	}
+
+	// Also load local .env from current directory (e.g. for development)
+	_ = loadEnvFile(".env")
 
 	cfg := &config{
 		Host:     os.Getenv("FRITZ_HOST"),
