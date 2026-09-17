@@ -93,12 +93,6 @@ check_dependencies() {
         exit 1
     fi
 
-    # Check for tar
-    if ! command_exists tar; then
-        log_error "tar not found. Please install tar."
-        exit 1
-    fi
-
     log_success "✓ All dependencies found"
 }
 
@@ -225,8 +219,9 @@ verify_checksum() {
 
     log_info "Verifying SHA256 checksum..."
 
-    # Extract expected checksum for this file
-    expected=$(grep "$file_name" "$checksums_file" | head -n 1 | awk '{print $1}')
+    # Extract expected checksum for this file (exact filename match, e.g. so
+    # "fritz-mcp-linux-arm" cannot match "fritz-mcp-linux-arm64")
+    expected=$(awk -v name="$file_name" '$2 == name { print $1; exit }' "$checksums_file")
 
     if [ -z "$expected" ]; then
         log_error "No checksum found for $file_name in SHA256SUMS"
@@ -312,8 +307,9 @@ main() {
     version=$(resolve_version)
     log_info "Installing version: $version"
 
-    # Construct binary name and URLs
-    binary_name="fritz-mcp-${os}-${arch}.tar.xz"
+    # Construct asset name and URLs
+    # Release assets are plain, uncompressed binaries named fritz-mcp-<os>-<arch>
+    binary_name="fritz-mcp-${os}-${arch}"
     base_url="https://github.com/${GITHUB_REPO}/releases/download/${version}"
     binary_url="${base_url}/${binary_name}"
     checksums_url="${base_url}/SHA256SUMS"
@@ -333,39 +329,25 @@ main() {
         exit 1
     fi
 
-    # Download binary tarball
+    # Download binary
     log_info "Downloading $binary_name..."
-    tarball_path="${TEMP_DIR}/${binary_name}"
-    if ! download_with_retry "$binary_url" "$tarball_path"; then
+    binary_path="${TEMP_DIR}/${binary_name}"
+    if ! download_with_retry "$binary_url" "$binary_path"; then
         log_error "Failed to download binary from $binary_url"
         log_error "Please check your internet connection and verify the version exists"
         exit 1
     fi
 
-    # Validate tarball is non-empty
-    if [ ! -s "$tarball_path" ]; then
-        log_error "Downloaded tarball is empty"
+    # Validate binary is non-empty
+    if [ ! -s "$binary_path" ]; then
+        log_error "Downloaded binary is empty"
         exit 1
     fi
 
     # Verify checksum
-    if ! verify_checksum "$tarball_path" "$checksums_file"; then
+    if ! verify_checksum "$binary_path" "$checksums_file"; then
         log_error "Checksum verification failed - refusing to install"
-        rm -f "$tarball_path"
-        exit 1
-    fi
-
-    # Extract tarball
-    log_info "Extracting binary..."
-    if ! tar -xJf "$tarball_path" -C "$TEMP_DIR" 2>/dev/null; then
-        log_error "Failed to extract tarball"
-        exit 1
-    fi
-
-    # Verify extracted binary exists
-    extracted_binary="${TEMP_DIR}/fritz-mcp"
-    if [ ! -f "$extracted_binary" ]; then
-        log_error "Extracted binary not found: fritz-mcp"
+        rm -f "$binary_path"
         exit 1
     fi
 
@@ -390,12 +372,12 @@ main() {
 
     # Install binary
     log_info "Installing to: $target_binary"
-    if ! cp "$extracted_binary" "$target_binary"; then
+    if ! cp "$binary_path" "$target_binary"; then
         log_error "Failed to copy binary to $target_binary"
         exit 1
     fi
 
-    # Make executable
+    # Ensure installed binary is executable
     if ! chmod +x "$target_binary"; then
         log_error "Failed to make binary executable"
         exit 1

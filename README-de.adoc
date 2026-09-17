@@ -93,18 +93,18 @@ FRITZBOX_MCP_INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent
 
 Lade die Binärdatei für dein System von https://github.com/kambriso/fritzbox-mcp-server/releases[Releases]:
 
-Linux:: `fritz-mcp-linux-amd64.tar.xz` oder `fritz-mcp-linux-arm64.tar.xz`
-macOS:: `fritz-mcp-darwin-amd64.tar.xz` oder `fritz-mcp-darwin-arm64.tar.xz`
-Windows:: `fritz-mcp-windows-amd64.zip` oder `fritz-mcp-windows-arm64.zip`
+Linux:: `fritz-mcp-linux-amd64` (oder `fritz-mcp-linux-arm64`, `fritz-mcp-linux-386`, `fritz-mcp-linux-arm`)
+macOS:: `fritz-mcp-darwin-amd64` oder `fritz-mcp-darwin-arm64`
+Windows:: `fritz-mcp-windows-amd64.exe` oder `fritz-mcp-windows-arm64.exe`
 
-Entpacke das Archiv und mache es ausführbar (Linux/macOS):
+Die Release-Assets sind reine Binärdateien - es gibt kein Archiv zum Entpacken. Mache deine Datei ausführbar und verschiebe sie in deinen `PATH` (Linux/macOS):
 [source,bash]
 ----
-tar -xJf fritz-mcp-linux-amd64.tar.xz
-chmod +x fritz-mcp
+chmod +x fritz-mcp-linux-amd64
+mv fritz-mcp-linux-amd64 ~/.local/bin/fritz-mcp
 ----
 
-Windows: Entpacke die ZIP-Datei.
+Windows: Führe die heruntergeladene `.exe`-Datei direkt aus.
 
 ==== 2. Interaktives Setup
 
