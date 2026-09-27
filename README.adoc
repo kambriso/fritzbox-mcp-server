@@ -181,6 +181,12 @@ Restart your MCP client after config changes.
 
 "Is my WiFi secure?"
 
+"Which WiFi channels are congested in my area?"
+
+"Show neighboring WiFi networks and their signal strength"
+
+"Is my WiFi channel busy?"
+
 ==== Analyze Your Network
 
 "Analyze my network health and tell me if everything looks good"

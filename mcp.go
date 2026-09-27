@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/kambriso/fritzbox-mcp-server/restclient"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -16,15 +18,17 @@ import (
 type mcpServer struct {
 	mcpServer   *server.MCPServer
 	tr064       *client
+	rest        *restclient.RestClient
 	registry    *registry
 	docsIndex   *index
 	configError error // error if configuration is missing or invalid
 }
 
 // newServer creates a new MCP server with TR-064 integration
-func newServer(name, version string, tr064Client *client, registry *registry, docsIndex *index, configErr error) *mcpServer {
+func newServer(name, version string, tr064Client *client, restClient *restclient.RestClient, registry *registry, docsIndex *index, configErr error) *mcpServer {
 	s := &mcpServer{
 		tr064:       tr064Client,
+		rest:        restClient,
 		registry:    registry,
 		docsIndex:   docsIndex,
 		configError: configErr,
@@ -39,8 +43,8 @@ func newServer(name, version string, tr064Client *client, registry *registry, do
 	// Register generic execution tool
 	s.registerExecutionTools()
 
-	// Auto-register tools for all services
-	s.registerAllServiceTools()
+	// Register REST-backed tools (non-TR-064, e.g. wifi channel environment)
+	s.registerRestTools()
 
 	return s
 }
@@ -409,5 +413,72 @@ func (s *mcpServer) handleCallAction(args map[string]interface{}) (*mcp.CallTool
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal result: %v", err)), nil
 	}
 
+	return mcp.NewToolResultText(string(data)), nil
+}
+
+// registerRestTools registers tools backed by the FRITZ!Box REST client
+// (web UI api/v0) rather than TR-064.
+func (s *mcpServer) registerRestTools() {
+	if s.rest == nil {
+		return
+	}
+	s.mcpServer.AddTool(mcp.Tool{
+		Name:        "wifi_channel_environment",
+		Description: "Get the FRITZ!Box Wi-Fi channel environment via the REST API: triggers an on-demand neighbor scan and returns each neighboring network (SSID, MAC, channel, band, channel width, RSSI in dBm)",
+		InputSchema: mcp.ToolInputSchema{
+			Type:       "object",
+			Properties: map[string]interface{}{},
+		},
+	}, s.handleWifiChannelEnvironment)
+}
+
+// handleWifiChannelEnvironment implements wifi_channel_environment
+func (s *mcpServer) handleWifiChannelEnvironment(args map[string]interface{}) (*mcp.CallToolResult, error) {
+	if s.configError != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Action failed: %v", s.configError)), nil
+	}
+	entries, status, err := s.rest.GetChannelEnvironment(context.Background(), 90*time.Second)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to fetch channel environment: %v", err)), nil
+	}
+
+	type neighborOut struct {
+		Ssid         string `json:"ssid,omitempty"`
+		MAC          string `json:"mac,omitempty"`
+		Channel      int    `json:"channel"`
+		ChannelWidth int    `json:"channel_width_mhz"`
+		Frequency    int    `json:"frequency_mhz"`
+		RSSI         int    `json:"rssi_dbm"`
+		OwnRadio     bool   `json:"own_radio"`
+	}
+	out := struct {
+		ScanStatus string        `json:"scan_status"`
+		Neighbors  []neighborOut `json:"neighbor_networks"`
+		OwnRadios  int           `json:"own_radios"`
+	}{}
+	out.ScanStatus = status
+	for _, e := range entries {
+		isOwn := e.RadioType == "1"
+		for _, ch := range e.Channels {
+			n := neighborOut{
+				Ssid:         e.SSID,
+				MAC:          e.MAC,
+				Channel:      ch.UsedCH,
+				ChannelWidth: e.ChannelWidth,
+				Frequency:    ch.Frequency,
+				RSSI:         e.RSSI,
+				OwnRadio:     isOwn,
+			}
+			if isOwn {
+				out.OwnRadios++
+			}
+			out.Neighbors = append(out.Neighbors, n)
+		}
+	}
+
+	data, err := json.MarshalIndent(out, "", "  ")
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to encode result: %v", err)), nil
+	}
 	return mcp.NewToolResultText(string(data)), nil
 }

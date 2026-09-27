@@ -1,0 +1,7 @@
+[tools]
+"go:github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen" = "latest"
+
+[tasks.generate-oapi-client]
+description = "Generate typed REST client from the extracted FRITZ!OS OpenAPI schema"
+run = "mise x -- oapi-codegen --config restclient/oapi-client.cfg.json contracts/openapi.yaml > restclient/client.gen.go"
+sources = ["contracts/openapi.yaml", "restclient/oapi-client.cfg.json"]

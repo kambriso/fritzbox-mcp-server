@@ -1,0 +1,5 @@
+{
+  "package": "restclient",
+  "generate": {"client": true, "models": true},
+  "output-options": {"prefer-skip-optional-pointer": true}
+}

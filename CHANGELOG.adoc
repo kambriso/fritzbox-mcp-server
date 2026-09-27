@@ -2,6 +2,14 @@
 
 All notable changes to the FRITZ!Box MCP Server project will be documented in this file.
 
+== Unreleased
+
+=== Added
+- `wifi_channel_environment` MCP tool switched to the FRITZ!Box REST API (`/api/v0/generic/wlan`, discovered by unpacking the official 7590 AX 08.25 firmware): triggers an on-demand neighbor scan and returns SSID, MAC, channel, band, channel width, and RSSI in dBm for each neighboring network
+- Independent web-session (AVM-SID) authentication with PBKDF2 (FRITZ!OS 7.24+) and legacy MD5 challenge support
+- Unit tests for login challenge-response, on-demand scan flow, and Lua-struct APEnv parsing with a fake FRITZ!Box
+- OpenAPI contract for the FRITZ!Box REST API at `contracts/openapi.yaml` (extracted from FRITZ!Box 7590 AX firmware 08.25, `/usr/rest_api` Lua handlers); regenerated typed client lives in `restclient/client.gen.go` via `mise run generate-oapi-client`
+
 == link:https://github.com/kambriso/fritzbox-mcp-server/releases/tag/v0.8.0[0.8.0] - 2026-02-10
 
 === Added

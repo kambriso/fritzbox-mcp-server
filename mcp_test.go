@@ -16,7 +16,7 @@ func TestMCPUnconfiguredState(t *testing.T) {
 
 	// Create a server in unconfigured state
 	// Parameters: name, version, tr064Client, registry, docsIndex, configErr
-	srv := newServer("test-server", "1.0.0", nil, nil, nil, configErr)
+	srv := newServer("test-server", "1.0.0", nil, nil, nil, nil, configErr)
 
 	// Test cases for different tool handlers
 	tests := []struct {
@@ -95,7 +95,7 @@ func TestUnconfiguredNoArgumentTools(t *testing.T) {
 		},
 	}
 
-	srv := newServer("test-server", "1.0.0", nil, reg, newIndex(), configErr)
+	srv := newServer("test-server", "1.0.0", nil, nil, reg, newIndex(), configErr)
 
 	// The tool handler should be created even if config is bad
 	handler := srv.createActionHandler("urn:test:service:1", "GetStatus")

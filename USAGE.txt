@@ -67,6 +67,9 @@ Discovery:
   - list_services     List all services
   - list_actions      List actions for a service
   - describe_action   Get action parameters
+  - wifi_channel_environment  Wi-Fi channel environment via REST API
+    (/api/v0): on-demand neighbor scan with SSID, MAC, channel, band,
+    channel width, and RSSI
 
 OTHER OPTIONS:
   --setup               Run interactive setup

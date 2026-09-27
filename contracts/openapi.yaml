@@ -1,0 +1,2118 @@
+openapi: 3.1.0
+info:
+  title: AVM FRITZ!Box REST API (extracted from FRITZ!OS firmware)
+  version: 4.2.0
+  description: 'Statically extracted from the Lua REST API handlers (/usr/rest_api)
+    of the official AVM FRITZ!Box 7590 AX firmware 08.25 (FRITZ!OS 7.63, rest_api
+    version 4.2.0). Unpacked via firmware image extraction; see also
+    www/js3/rest-helper.js and www/avm/js/http.js for the client side.
+
+
+    Auth: HTTP header ''Authorization: AVM-SID {sid}'' -- session id from
+    login_sid.lua/JASONII login flow.
+
+
+    Base paths: /api/v0, /api/v0/generic, /api/v0/dino, plugin paths /api/v0/<plugin>.
+
+    Overview at GET /api/v0 lists available plugin URLs.
+
+
+    Dynamic payloads emitted as additionalProperties: true.'
+servers:
+- url: http://{fritzbox}
+  variables:
+    fritzbox:
+      default: fritz.box
+      description: FRITZ!Box hostname.
+security:
+- AVM_SID: []
+components:
+  securitySchemes:
+    AVM_SID:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Format: AVM-SID {sid} — session id from JASONII login_sid.lua
+        / ajax.js.'
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                description: rest_api_const status code
+              message:
+                type: string
+              field:
+                type: string
+              extension:
+                type: object
+                additionalProperties: true
+    WlanUIMod:
+      type: object
+      properties:
+        APEnvStatus:
+          type: string
+          description: 0=done, 1=busy, 3=busy, 2=error
+        APEnv:
+          type: array
+          items:
+            type: object
+            properties:
+              params:
+                type: string
+                description: 'Lua-table string: { ssid = "...", rssi = -66, ... }'
+      additionalProperties: true
+      description: /api/v0/generic/wlan UIMod payload (subset); other keys are UIMod-defined
+        and dynamic
+    WlanScanTrigger:
+      type: object
+      required:
+      - scan_apenv
+      properties:
+        scan_apenv:
+          type: string
+          enum:
+          - '1'
+          description: set to "1" to start neighbor scan
+    PhoneCalls:
+      properties:
+        enabled:
+          type: boolean
+          description: call log active
+        calls:
+          type: array
+          items:
+            $ref: '#/components/schemas/CallEntry'
+      required:
+      - enabled
+      - calls
+    CallEntry:
+      type: object
+      description: libcallloglua.GetAll entry (abridged; additional fields may exist)
+      additionalProperties: true
+    SuccessObj:
+      type: object
+      properties:
+        success:
+          type: integer
+    Notifications:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+      description: libboxnotifylua.GetBoxNotifications
+    FaxJournal:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+    WebUsbBrowse:
+      type: object
+      properties:
+        accessoryUrl:
+          type: string
+        indexingState:
+          type: string
+          enum:
+          - busy
+          - ready
+        pathInfo:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              path:
+                type: string
+              storageType:
+                type: string
+    WebUsbPut:
+      type: object
+      properties:
+        startIndexing:
+          type: string
+          enum:
+          - busy
+          - error
+          - ok
+    SmDeviceStatistics:
+      type: object
+      additionalProperties: true
+      description: Temperatures24h / Humidity24h / VoltageHour / PowerHour / Energy24h/Week/Month/2Years
+    SmIndex:
+      type: object
+      properties:
+        devices:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        templates:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        triggers:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        global:
+          type: object
+          additionalProperties: true
+          description: only on non-simplified
+    SmDeviceList:
+      type: array
+      items:
+        $ref: '#/components/schemas/SmDevice'
+    SmDevice:
+      type: object
+      description: libaha.GetEnhDevice (dynamic shape)
+      additionalProperties: true
+    SmTemplateList:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+    SmTriggerList:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+    SmTrigger:
+      type: object
+      additionalProperties: true
+    SmGlobal:
+      type: object
+      additionalProperties: true
+    StorageRights:
+      type: array
+      items:
+        type: object
+        properties:
+          _node:
+            type: string
+          path:
+            type: string
+          status:
+            type: string
+          access:
+            type: array
+            items:
+              type: object
+              properties:
+                _node:
+                  type: string
+                username:
+                  type: string
+                boxusers_UID:
+                  type: string
+                access_from_local:
+                  type: string
+                access_from_internet:
+                  type: string
+                write_access_from_local:
+                  type: string
+                write_access_from_internet:
+                  type: string
+    StorageRightsPost:
+      type: object
+      required:
+      - boxusers_UID
+      - access
+      properties:
+        boxusers_UID:
+          type: string
+          description: boxuser id
+        access:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              access_from_local:
+                type: string
+              access_from_internet:
+                type: string
+              write_access_from_local:
+                type: string
+              write_access_from_internet:
+                type: string
+    InfoVersion:
+      type: object
+      properties:
+        version:
+          type: string
+          example: 4.2.0
+    SmTamCalls:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+    GenericUIMod:
+      type: object
+      additionalProperties: true
+      description: arbitrary UIMod JSON from TR-064-like scheme
+paths:
+  /api/v0:
+    get:
+      operationId: get__api_v0_send_overview
+      summary: send_overview
+      tags:
+      - send_overview
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/boxnotifications:
+    get:
+      operationId: get__api_v0_dino_boxnotifications_boxnotify_rest.get_notifications
+      summary: boxnotify get_notifications
+      tags:
+      - boxnotify
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notifications'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/boxnotifications/{param1}:
+    delete:
+      operationId: delete__api_v0_dino_boxnotifications_param1__boxnotify_rest.clear_notification
+      summary: boxnotify clear_notification
+      tags:
+      - boxnotify
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v0/dino/configflags:
+    get:
+      operationId: get__api_v0_dino_configflags_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/errorreport:
+    post:
+      operationId: post__api_v0_dino_errorreport_post_data
+      summary: post_data
+      tags:
+      - post_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/eventlog:
+    get:
+      operationId: get__api_v0_dino_eventlog_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/faxjournal:
+    get:
+      operationId: get__api_v0_dino_faxjournal_faxjournal_rest.get_faxjournal
+      summary: faxjournal get_faxjournal
+      tags:
+      - faxjournal
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FaxJournal'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/faxjournal/{param1}:
+    delete:
+      operationId: delete__api_v0_dino_faxjournal_param1__faxjournal_rest.delete_fax
+      summary: faxjournal delete_fax
+      tags:
+      - faxjournal
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: put__api_v0_dino_faxjournal_param1__faxjournal_rest.set_fax_flag
+      summary: faxjournal set_fax_flag
+      tags:
+      - faxjournal
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                unread: &id001
+                  type: boolean
+  /api/v0/dino/ipv6firewall:
+    get:
+      operationId: get__api_v0_dino_ipv6firewall_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_ipv6firewall_put_data
+      summary: put_data
+      tags:
+      - put_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_dino_ipv6firewall_post_data
+      summary: post_data
+      tags:
+      - post_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: delete__api_v0_dino_ipv6firewall_delete_data
+      summary: delete_data
+      tags:
+      - delete_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/kisi:
+    get:
+      operationId: get__api_v0_dino_kisi_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_kisi_put_data
+      summary: put_data
+      tags:
+      - put_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_dino_kisi_post_data
+      summary: post_data
+      tags:
+      - post_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: delete__api_v0_dino_kisi_delete_data
+      summary: delete_data
+      tags:
+      - delete_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/misc:
+    get:
+      operationId: get__api_v0_dino_misc_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_misc_put_data
+      summary: put_data
+      tags:
+      - put_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/myfritzdevice:
+    get:
+      operationId: get__api_v0_dino_myfritzdevice_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_myfritzdevice_put_data
+      summary: put_data
+      tags:
+      - put_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_dino_myfritzdevice_post_data
+      summary: post_data
+      tags:
+      - post_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: delete__api_v0_dino_myfritzdevice_delete_data
+      summary: delete_data
+      tags:
+      - delete_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/phonebook:
+    get:
+      operationId: get__api_v0_dino_phonebook_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_phonebook_put_data
+      summary: put_data
+      tags:
+      - put_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_dino_phonebook_post_data
+      summary: post_data
+      tags:
+      - post_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      operationId: delete__api_v0_dino_phonebook_delete_data
+      summary: delete_data
+      tags:
+      - delete_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/phonecalls:
+    get:
+      operationId: get__api_v0_dino_phonecalls_calllog_rest.get_phonecalls
+      summary: calllog get_phonecalls
+      tags:
+      - calllog
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhoneCalls'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_phonecalls_calllog_rest.set_enable_calllog
+      summary: calllog set_enable_calllog
+      tags:
+      - calllog
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled: *id001
+  /api/v0/dino/tamcalls:
+    get:
+      operationId: get__api_v0_dino_tamcalls_calllog_rest.get_tamcalls
+      summary: calllog get_tamcalls
+      tags:
+      - calllog
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmTamCalls'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/dino/tamcalls/{param1}:
+    put:
+      operationId: put__api_v0_dino_tamcalls_param1__calllog_rest.set_tamcall_flag
+      summary: calllog set_tamcall_flag
+      tags:
+      - calllog
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new: *id001
+    delete:
+      operationId: delete__api_v0_dino_tamcalls_param1__calllog_rest.delete_tam_call
+      summary: calllog delete_tam_call
+      tags:
+      - calllog
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v0/dino/timermix:
+    get:
+      operationId: get__api_v0_dino_timermix_get_data
+      summary: get_data
+      tags:
+      - get_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_dino_timermix_put_data
+      summary: put_data
+      tags:
+      - put_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_dino_timermix_post_data
+      summary: post_data
+      tags:
+      - post_data
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/generic/multi:
+    get:
+      operationId: get__api_v0_generic_multi_api_generic.get_multiple
+      summary: api_generic.get_multiple
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericUIMod'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/generic/wlan:
+    get:
+      operationId: get_api_v0_generic_wlan
+      summary: wlan UIMod payload (APEnv neighbor scan)
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WlanUIMod'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put_api_v0_generic_wlan
+      summary: trigger WLAN neighbor scan (scan_apenv="1")
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scan_apenv: &id002
+                  type: string
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/generic/{param1}:
+    get:
+      operationId: get__api_v0_generic_param1__api_generic.get_data
+      summary: api_generic.get_data
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericUIMod'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: put__api_v0_generic_param1__api_generic.set_module
+      summary: api_generic.set_module
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v0/generic/{param1}/{param2}:
+    get:
+      operationId: get__api_v0_generic_param1_param2__api_generic.get_data
+      summary: api_generic.get_data
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericUIMod'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param2
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: post__api_v0_generic_param1_param2__api_generic.create_list_item
+      summary: api_generic.create_list_item
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param2
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v0/generic/{param1}/{param2}/{param3}:
+    get:
+      operationId: get__api_v0_generic_param1_param2_param3__api_generic.get_data
+      summary: api_generic.get_data
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericUIMod'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param2
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param3
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: delete__api_v0_generic_param1_param2_param3__api_generic.delete_list_item
+      summary: api_generic.delete_list_item
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param2
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param3
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: put__api_v0_generic_param1_param2_param3__api_generic.set_list_item
+      summary: api_generic.set_list_item
+      tags:
+      - api_generic
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessObj'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param2
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: param3
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v0/media:
+    get:
+      operationId: get__api_v0_media_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/media/mediaServer:
+    get:
+      operationId: get__api_v0_media_mediaServer_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    put:
+      operationId: put__api_v0_media_mediaServer_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetFilter: *id002
+  /api/v0/media/podcasts:
+    get:
+      operationId: get__api_v0_media_podcasts_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_media_podcasts_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/media/podcasts/order:
+    put:
+      operationId: put__api_v0_media_podcasts_order_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/media/podcasts/{param1}:
+    get:
+      operationId: get__api_v0_media_podcasts_param1__
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: put__api_v0_media_podcasts_param1__
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: delete__api_v0_media_podcasts_param1__
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v0/media/suggested:
+    get:
+      operationId: get__api_v0_media_suggested_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/media/webradios:
+    get:
+      operationId: get__api_v0_media_webradios_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      operationId: post__api_v0_media_webradios_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/media/webradios/order:
+    put:
+      operationId: put__api_v0_media_webradios_order_
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v0/media/webradios/{param1}:
+    get:
+      operationId: get__api_v0_media_webradios_param1__
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: put__api_v0_media_webradios_param1__
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: delete__api_v0_media_webradios_param1__
+      summary: ''
+      tags:
+      - ''
+      security:
+      - AVM_SID: []
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: param1
+        in: path
+        required: true
+        schema:
+          type: string

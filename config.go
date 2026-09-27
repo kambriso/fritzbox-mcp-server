@@ -150,3 +150,15 @@ func (c *config) baseURL() string {
 	}
 	return fmt.Sprintf("%s://%s:%d", scheme, c.Host, c.Port)
 }
+
+// webURL returns the base URL for the FRITZ!Box web UI (data.lua),
+// which runs on the standard HTTP(S) ports, not the TR-064 port.
+func (c *config) webURL() string {
+	scheme := "http"
+	port := 80
+	if c.TLS {
+		scheme = "https"
+		port = 443
+	}
+	return fmt.Sprintf("%s://%s:%d", scheme, c.Host, port)
+}
