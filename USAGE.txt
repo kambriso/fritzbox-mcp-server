@@ -74,10 +74,14 @@ OTHER OPTIONS:
   --debug               Enable verbose debug logging
 
 CONFIGURATION:
-  Configuration is managed via the --setup command.
-  Credentials are stored securely in your global config directory:
-    ~/.config/fritzbox-mcp-server/.env (on Linux/macOS)
-    %APPDATA%/fritzbox-mcp-server/.env (on Windows)
+  Configuration is loaded from the following sources (in order):
+  1. Global config: ~/.config/fritzbox-mcp-server/.env (on Linux/macOS)
+                    %APPDATA%/fritzbox-mcp-server/.env (on Windows)
+  2. Local .env:    .env in the current working directory
+  3. OS environment variables (highest priority)
+
+  Use --setup to store credentials globally for use with MCP clients.
+  A local .env file is recommended for development and testing.
 
 TIME-DELAYED ACTIONS (AI Agent Feature):
   When using with AI agents, you can request time-delayed actions:
