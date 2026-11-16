@@ -12,7 +12,7 @@ https://mcpservers.org/servers/kambriso/fritzbox-mcp-server[image:https://img.sh
 https://github.com/kambriso/fritzbox-mcp-server/actions/workflows/build.yml[image:https://github.com/kambriso/fritzbox-mcp-server/actions/workflows/build.yml/badge.svg[Build]]
 https://github.com/kambriso/fritzbox-mcp-server/releases/latest[image:https://img.shields.io/github/v/release/kambriso/fritzbox-mcp-server[Release]]
 https://gitlab.com/kambriso/fritzbox-mcp-server/-/pipelines[image:https://gitlab.com/kambriso/fritzbox-mcp-server/badges/main/pipeline.svg[Pipeline]]
-image:https://img.shields.io/badge/SLSA-Level%203-green[SLSA Level 3]
+image:https://img.shields.io/badge/SLSA-GitHub%20Level%203-green[SLSA-Provenienz für GitHub-Releases]
 image:https://img.shields.io/github/license/kambriso/fritzbox-mcp-server[License]
 image:https://img.shields.io/github/go-mod/go-version/kambriso/fritzbox-mcp-server[Go Version]
 
@@ -314,49 +314,15 @@ Unabhängige VirusTotal-Scans bestätigen, dass die Binärdateien sauber sind:
 
 ==== Supply-Chain-Sicherheit (Supply chain Levels for Software Artifacts, SLSA)
 
-Dieses Projekt stellt https://slsa.dev[SLSA]-Provenienz (Supply chain Levels for Software Artifacts) für alle Release-Binärdateien bereit.
-SLSA-Provenienz attestiert kryptographisch, dass Binärdateien aus spezifischem Quellcode von einem vertrauenswürdigen Builder erstellt wurden.
+GitHub-Releases stellen https://slsa.dev[SLSA]-Provenienz (Supply chain Levels for Software Artifacts) bereit, die vom vertrauenswürdigen GitHub-Actions-Builder erzeugt wird.
+GitLab-Releases stellen schlüssellose Cosign-Signaturen bereit; Azure-Pipeline-Artefakte enthalten derzeit nur Prüfsummen.
+Für GitLab- oder Azure-Artefakte wird kein SLSA-Level beansprucht.
 
 Zwei unabhängige Nachweise sind verfügbar:
 
-1. SHA256SUMS - Forge-übergreifende Reproduzierbarkeit (gleicher Quellcode erzeugt identische Binärdateien auf GitLab und GitHub)
-2. SLSA-Provenienz - Supply-Chain-Attestierung (beweist Binär-Herkunft und Build-Prozess)
-
-===== GitLab (SLSA Level 2)
-
-GitLab-Releases enthalten SLSA Level 2 Provenienz via `artifacts-metadata.json`.
-
-Verifizierung:
-
-[source,bash]
-----
-# Binary und SLSA-Metadaten herunterladen
-glab release download <tag> -R kambriso/fritzbox-mcp-server \
-  -n 'fritz-mcp-linux-amd64' -n 'artifacts-metadata.json' # <1>
-
-# Provenienz prüfen
-cat artifacts-metadata.json | jq '.predicateType'
-# Ausgabe: "https://slsa.dev/provenance/v1"
-
-# Artefakt-Digest verifizieren
-sha256sum fritz-mcp-linux-amd64
-# Mit Digest in artifacts-metadata.json subjects vergleichen
-----
-<1> Der Git-Tag zum Verifizieren, z.B. `v0.7.7`
-
-Alternativ das Makefile-Target verwenden:
-
-[source,bash]
-----
-make verify-slsa-gitlab-linux-amd64 SLSA_TAG=<tag>
-----
-
-Die Provenienz enthält:
-
-* In-toto Statement-Format (`https://in-toto.io/Statement/v0.1`)
-* SLSA v1 Prädikat mit Build-Definition
-* SHA256-Digests für alle Artefakte
-* GitLab CI Umgebungsparameter
+1. `SHA256SUMS` - Forge-übergreifende Reproduzierbarkeit zwischen GitHub Actions, GitLab CI und Azure Pipelines
+2. GitHub-SLSA-Provenienz - Supply-Chain-Attestierung für GitHub-Release-Binärdateien
+3. GitLab-Cosign-Signaturen - Schlüssellose Signaturen für GitLab-Release-Binärdateien
 
 ===== GitHub (SLSA Level 3)
 
@@ -386,15 +352,15 @@ Alternativ das Makefile-Target verwenden:
 make verify-slsa-github-linux-amd64 SLSA_TAG=<tag>
 ----
 
-===== Cosign-Signatur-Verifizierung
+===== GitLab-Cosign-Signatur-Verifizierung
 
-Alle Binärdateien sind mit https://docs.sigstore.dev/cosign/[Cosign] und schlüsselloser Signierung (OIDC) signiert.
-Signaturen und Zertifikate sind in den Release-Artefakten enthalten.
+GitLab-Release-Binärdateien sind mit https://docs.sigstore.dev/cosign/[Cosign] und schlüsselloser Signierung (OIDC) signiert.
+Signaturen und Zertifikate sind in den GitLab-Release-Artefakten enthalten.
 
 [source,bash]
 ----
 # Binärdatei, Signatur und Zertifikat herunterladen
-# (von GitLab-Artefakten oder GitHub-Release)
+# (von GitLab-Release-Artefakten)
 
 # Signatur verifizieren
 cosign verify-blob \
@@ -406,50 +372,48 @@ cosign verify-blob \
 
 ===== Unabhängige Verifizierung
 
-Alle Verifizierungen können offline mit Standard-Tools durchgeführt werden:
+Der Prüfsummenvergleich kann nach dem Herunterladen der Manifeste offline erfolgen.
+Die Verifizierung von Provenienz und schlüssellosen Signaturen kann Netzwerkzugriff auf Vertrauensmetadaten benötigen.
 
 [source,bash]
 ----
-# 1. Prüfsummen zwischen Forges vergleichen
-diff <(curl -sL gitlab-SHA256SUMS) <(curl -sL github-SHA256SUMS)
+# 1. Prüfsummen zwischen GitHub, GitLab und Azure vergleichen
+./scripts/verify-three-forge.sh github-SHA256SUMS gitlab-SHA256SUMS azure-SHA256SUMS
 
 # 2. Binärdatei gegen Prüfsumme verifizieren
 sha256sum -c SHA256SUMS
 
 # 3. SLSA-Provenienz verifizieren (slsa-verifier oder manuelle Prüfung)
-# 4. Cosign-Signatur verifizieren (benötigt Netzwerk für Zertifikatskette)
+# 4. GitLab-Cosign-Signatur verifizieren (benötigt Netzwerk für Zertifikatskette)
 
 # Vollständige Vertrauenskette: Quellcode -> CI-Build -> signiertes Artefakt -> dein Rechner
 ----
 
 ==== Cross-Git-Forge Verifizierung
 
-Dieses Projekt veröffentlicht identische Releases auf GitLab und GitHub.
-Cross-Forge-Verifizierung beweist, dass keine der Forges kompromittiert wurde - wenn ein Angreifer Binärdateien auf einer Forge modifiziert hätte, würden die Prüfsummen nicht übereinstimmen.
+Getaggte Commits werden unabhängig von GitHub Actions, GitLab CI und Azure Pipelines mit Go 1.25.6 gebaut.
+Die Cross-Forge-Verifizierung erkennt fehlende Artefakte und Byte-Unterschiede zwischen den drei Ausgaben.
 
-Dies ist unabhängig von SLSA: Während SLSA beweist "diese Binärdatei stammt aus diesem Quellcode", beweist Cross-Forge-Verifizierung "beide Forges liefern dieselbe Binärdatei".
+Dies ist unabhängig von Provenienz: Provenienz beschreibt die Herkunft eines Artefakts, Reproduzierbarkeit prüft dagegen, ob unabhängige Builder dieselben Bytes erzeugen.
 
 [source,bash]
 ----
-# Prüfsummen von beiden Forges herunterladen
-curl -sL "https://gitlab.com/.../SHA256SUMS" -o gitlab-SHA256SUMS
-curl -sL "https://github.com/.../SHA256SUMS" -o github-SHA256SUMS
-
-# Vergleichen - muss identisch sein
-diff gitlab-SHA256SUMS github-SHA256SUMS && echo "Cross-Forge Verifizierung bestanden"
-
-# Oder mit CLI-Tools:
-gh release download <tag> -R kambriso/fritzbox-mcp-server -p 'SHA256SUMS' -D github
-glab release download <tag> -R kambriso/fritzbox-mcp-server -n 'SHA256SUMS' -D gitlab
-diff github/SHA256SUMS gitlab/SHA256SUMS
+make verify-reproducible-three-forge \
+  TAG=<tag> \
+  AZURE_ORGANIZATION=<organisation> \
+  AZURE_PROJECT=<projekt> \
+  AZURE_RUN_ID=<id-des-tag-runs>
 ----
+
+Der Befehl lädt `SHA256SUMS` von allen drei Plattformen, validiert die vollständige kanonische Artefaktliste und zeigt bei abweichenden Digests einen aussagekräftigen Diff.
+Die Einrichtung von Azure-Repository und Pipeline beschreibt link:docs/azure-pipelines.adoc[Azure Pipelines setup].
 
 Warum das wichtig ist:
 
 * Schützt vor Kompromittierung einer einzelnen Forge
 * Validiert, dass reproduzierbare Builds korrekt funktionieren
-* Kein Vertrauen in eine einzelne Plattform erforderlich
-* Benutzer können mit Standard-Tools verifizieren (curl, diff, sha256sum)
+* Kein Vertrauen in eine einzelne Build-Plattform erforderlich
+* Heruntergeladene Manifeste lassen sich mit Standard-Tools prüfen
 
 === Token-Nutzung Hinweise
 
@@ -646,12 +610,12 @@ Verschiedene Go-Distributionen (Upstream vs Fedora/Debian-Pakete) können jedoch
 Bekannte Unterschiede:
 
 * Fedora Go 1.25.6 enthält `GOEXPERIMENT=nodwarf5` in die Toolchain kompiliert
-* Upstream Go 1.25.6 (von go.dev oder golang:1.25 Container) hat keine Experimente
+* Upstream Go 1.25.6 (von go.dev oder dem gepinnten Container) hat keine Experimente
 * Diese Unterschiede sind in der `.go.buildinfo` Sektion eingebettet
 
 ===== Lokale Builds verifizieren
 
-Um GitLab CI Builds lokal zu reproduzieren, verwende den gleichen golang:1.25 Container:
+Um CI-Builds lokal zu reproduzieren, verwende denselben `golang:1.25.6-bookworm` Container:
 
 [source,bash]
 ----
@@ -662,15 +626,16 @@ make dists-container
 sha256sum -c SHA256SUMS
 ----
 
-Das golang:1.25 Docker-Image entspricht der Upstream Go Distribution und gewährleistet Reproduzierbarkeit über Umgebungen hinweg.
+Der gepinnte Container entspricht der Upstream-Go-Distribution und verhindert Toolchain-Drift.
 
 ===== CI/CD Reproduzierbarkeit
 
-Sowohl GitLab CI als auch GitHub Actions verwenden die offizielle Go 1.25 Toolchain: GitLab über das golang:1.25 Container-Image, GitHub über actions/setup-go das von go.dev herunterlädt.
-Beide erzeugen byte-für-byte identische Binärdateien.
+GitHub Actions, GitLab CI und Azure Pipelines verwenden die offizielle Go-1.25.6-Toolchain.
+GitLab und Azure verwenden `golang:1.25.6-bookworm`; GitHub verwendet `actions/setup-go` mit exakt derselben Version.
+Getaggte Runs bauen die kanonischen Artefakte über `make release-artifacts`.
 Lokale Builds mit distributions-bereitgestellten Go-Paketen (Fedora, Ubuntu, etc.) können unterschiedliche Binärdateien erzeugen aufgrund distro-spezifischer Patches.
 
-Für byte-für-byte reproduzierbare lokale Builds verwende `make dists-container` das im golang:1.25 Container baut.
+Für byte-für-byte reproduzierbare lokale Builds verwende `make dists-container`.
 
 === Testen
 
@@ -702,7 +667,7 @@ Dies lädt Service-Deskriptoren in das `xml/` Verzeichnis für Offline-Analyse h
 
 === Release-Prozess
 
-Releases werden automatisch im öffentlichen Repository veröffentlicht wenn ein Versions-Tag gepusht wird.
+Release-Artefakte werden unabhängig von GitHub Actions, GitLab CI und Azure Pipelines gebaut, wenn derselbe Versions-Tag zu jeder Forge gespiegelt wird.
 
 ==== Setup
 
@@ -729,6 +694,13 @@ Release Workflow (link:.github/workflows/release.yml[release.yml])::
 . SHA256 Checksummen generieren
 . Ein Release in https://github.com/kambriso/fritzbox-mcp-server erstellen
 . Alle Binärdateien und Checksummen hochladen
+
+Azure Pipeline (link:azure-pipelines.yml[azure-pipelines.yml])::
+. Im gepinnten `golang:1.25.6-bookworm` Container bauen und testen
+. Für `v*` Tags denselben kanonischen Release-Artefaktsatz bauen
+. Binärdateien und `SHA256SUMS` als Pipeline-Artefakt `release-artifacts` veröffentlichen
+
+Siehe link:docs/azure-pipelines.adoc[Azure Pipelines setup] für Repository-Spiegelung, Pipeline-Erstellung und Drei-Forge-Verifizierung.
 
 Container Workflow (link:.github/workflows/container.yml[container.yml])::
 . WASI Container-Image bauen (getaggt mit `-wasi` Suffix)

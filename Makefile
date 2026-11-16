@@ -1,8 +1,12 @@
 .POSIX:
 
-TAG := $(shell git describe --tags --always --dirty)
-VERSION := $(shell git describe --tags --always --dirty | sed 's/^v//')
-COMMIT := $(shell git rev-parse --short HEAD)
+.DEFAULT_GOAL := help
+
+TAG ?= $(shell git describe --tags --always --dirty)
+VERSION ?= $(shell git describe --tags --always --dirty | sed 's/^v//')
+COMMIT ?= $(shell git rev-parse --short HEAD)
+GO_VERSION ?= 1.25.6
+GO_IMAGE ?= golang:$(GO_VERSION)-bookworm
 
 # Reproducible builds
 SOURCE_DATE_EPOCH ?= $(shell git log -1 --format=%ct)
@@ -14,6 +18,7 @@ BINARY = fritz-mcp
 MAIN = .
 BUILD_DIR ?= build
 DIST_DIR ?= dist
+RELEASE_DIR ?= release
 LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT) -buildid=
 DISTFLAGS = -trimpath -buildvcs=false -ldflags "-s -w -extldflags=-static $(LDFLAGS)"
 STRIP ?= strip
@@ -38,7 +43,7 @@ test: ## Run tests
 .PHONY: clean
 clean: ## Remove build artifacts
 	rm -f $(BINARY)
-	rm -rf $(BUILD_DIR)/ $(DIST_DIR)/
+	rm -rf $(BUILD_DIR)/ $(DIST_DIR)/ $(RELEASE_DIR)/
 	rm -f arch.svg architecture.svg architecture.mmd
 	$(GO) clean
 
@@ -161,8 +166,57 @@ $(DIST_DIR)/$(BINARY)-wasi.tar.xz: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm | $(DIS
 dists: $(DIST_BINARIES) ## Build all platform binaries
 
 .PHONY: dists-container
-dists-container: ## Build all platform binaries in golang:1.25 container for reproducibility
-	podman run --rm -v .:/work:z -w /work golang:1.25 make dists
+dists-container: ## Build all platform binaries in the pinned Go container
+	podman run --rm -e HOME=/tmp -v .:/work:z -w /work $(GO_IMAGE) \
+		make dists TAG=$(TAG) VERSION=$(VERSION) COMMIT=$(COMMIT) SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
+
+RELEASE_FILES = \
+	$(RELEASE_DIR)/$(BINARY)-linux-amd64 \
+	$(RELEASE_DIR)/$(BINARY)-linux-arm64 \
+	$(RELEASE_DIR)/$(BINARY)-linux-386 \
+	$(RELEASE_DIR)/$(BINARY)-linux-arm \
+	$(RELEASE_DIR)/$(BINARY)-darwin-amd64 \
+	$(RELEASE_DIR)/$(BINARY)-darwin-arm64 \
+	$(RELEASE_DIR)/$(BINARY)-windows-amd64.exe \
+	$(RELEASE_DIR)/$(BINARY)-windows-arm64.exe \
+	$(RELEASE_DIR)/$(BINARY)-wasi.wasm
+
+.PHONY: release-dir
+release-dir:
+	mkdir -p $(RELEASE_DIR)
+
+$(RELEASE_DIR)/$(BINARY)-linux-amd64: $(BUILD_DIR)/linux/amd64/$(BINARY) | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-linux-arm64: $(BUILD_DIR)/linux/arm64/$(BINARY) | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-linux-386: $(BUILD_DIR)/linux/386/$(BINARY) | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-linux-arm: $(BUILD_DIR)/linux/arm/$(BINARY) | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-darwin-amd64: $(BUILD_DIR)/darwin/amd64/$(BINARY) | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-darwin-arm64: $(BUILD_DIR)/darwin/arm64/$(BINARY) | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-windows-amd64.exe: $(BUILD_DIR)/windows/amd64/$(BINARY).exe | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-windows-arm64.exe: $(BUILD_DIR)/windows/arm64/$(BINARY).exe | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/$(BINARY)-wasi.wasm: $(BUILD_DIR)/wasi/wasm/$(BINARY).wasm | release-dir
+	cp $< $@
+
+$(RELEASE_DIR)/SHA256SUMS: $(RELEASE_FILES)
+	cd $(RELEASE_DIR) && sha256sum $(notdir $(RELEASE_FILES)) > SHA256SUMS
+
+.PHONY: release-artifacts
+release-artifacts: $(RELEASE_DIR)/SHA256SUMS ## Build the canonical release artifact set and checksums
 
 .PHONY: archives
 archives: $(DIST_ARCHIVES) ## Create release archives
@@ -315,7 +369,23 @@ deps: ## List dependencies
 # SLSA verification
 GITHUB_REPO ?= kambriso/fritzbox-mcp-server
 GITLAB_REPO ?= kambriso/fritzbox-mcp-server
+AZURE_ORGANIZATION ?=
+AZURE_PROJECT ?=
+AZURE_RUN_ID ?=
+AZURE_ARTIFACT ?= release-artifacts
 VERIFY_DIR ?= $(BUILD_DIR)/verify
+
+.PHONY: verify-reproducible-three-forge
+verify-reproducible-three-forge: ## Compare GitHub, GitLab, and Azure checksums (use TAG and Azure variables)
+	TAG=$(TAG) \
+	GITHUB_REPO=$(GITHUB_REPO) \
+	GITLAB_REPO=$(GITLAB_REPO) \
+	AZURE_ORGANIZATION=$(AZURE_ORGANIZATION) \
+	AZURE_PROJECT=$(AZURE_PROJECT) \
+	AZURE_RUN_ID=$(AZURE_RUN_ID) \
+	AZURE_ARTIFACT=$(AZURE_ARTIFACT) \
+	VERIFY_DIR=$(VERIFY_DIR)/three-forge \
+	./scripts/verify-three-forge.sh
 
 # GitHub SLSA Level 3 verification (downloads binary + provenance, then verifies)
 define slsa-verify-github
@@ -367,7 +437,7 @@ verify-slsa-github-wasi: ## Verify GitHub wasi
 .PHONY: verify-slsa-github
 verify-slsa-github: verify-slsa-github-linux-amd64 verify-slsa-github-linux-arm64 verify-slsa-github-linux-arm verify-slsa-github-linux-386 verify-slsa-github-darwin-amd64 verify-slsa-github-darwin-arm64 verify-slsa-github-windows-amd64 verify-slsa-github-windows-arm64 verify-slsa-github-wasi ## Verify GitHub SLSA Level 3 provenance (use TAG=v0.x.x)
 
-# GitLab SLSA Level 2 verification (downloads binary + sig + cert, then verifies)
+# GitLab Cosign verification (downloads binary, signature, and certificate)
 define slsa-verify-gitlab
 	mkdir -p $(VERIFY_DIR)/gitlab
 	glab release download $(TAG) -R $(GITLAB_REPO) -D $(VERIFY_DIR)/gitlab \
@@ -417,10 +487,10 @@ verify-slsa-gitlab-wasi: ## Verify GitLab wasi
 	$(call slsa-verify-gitlab,fritz-mcp-wasi.wasm)
 
 .PHONY: verify-slsa-gitlab
-verify-slsa-gitlab: verify-slsa-gitlab-linux-amd64 verify-slsa-gitlab-linux-arm64 verify-slsa-gitlab-linux-arm verify-slsa-gitlab-linux-386 verify-slsa-gitlab-darwin-amd64 verify-slsa-gitlab-darwin-arm64 verify-slsa-gitlab-windows-amd64 verify-slsa-gitlab-windows-arm64 verify-slsa-gitlab-wasi ## Verify GitLab SLSA Level 2 signatures (use TAG=v0.x.x)
+verify-slsa-gitlab: verify-slsa-gitlab-linux-amd64 verify-slsa-gitlab-linux-arm64 verify-slsa-gitlab-linux-arm verify-slsa-gitlab-linux-386 verify-slsa-gitlab-darwin-amd64 verify-slsa-gitlab-darwin-arm64 verify-slsa-gitlab-windows-amd64 verify-slsa-gitlab-windows-arm64 verify-slsa-gitlab-wasi ## Verify GitLab Cosign signatures (legacy target name; use TAG=v0.x.x)
 
 .PHONY: verify-slsa
-verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify SLSA provenance on both forges
+verify-slsa: verify-slsa-github verify-slsa-gitlab ## Verify GitHub provenance and GitLab Cosign signatures
 
 # VirusTotal scanning (requires VT_API_KEY environment variable)
 define vt-scan

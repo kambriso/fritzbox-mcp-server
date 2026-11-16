@@ -33,5 +33,6 @@ docs/avm/*.pdf
 
 # Distribution builds
 /dist/
+/release/
 build
 README.html

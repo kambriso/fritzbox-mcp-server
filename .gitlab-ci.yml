@@ -2,7 +2,7 @@ variables:
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/fritzbox-mcp-server/${CI_COMMIT_TAG}"
 
 test:
-  image: golang:1.25
+  image: golang:1.25.6-bookworm
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -13,7 +13,7 @@ test:
     - make test
 
 release:
-  image: golang:1.25
+  image: golang:1.25.6-bookworm
   rules:
     - if: $CI_COMMIT_TAG
   id_tokens:
@@ -25,18 +25,7 @@ release:
     - make test
     - VERSION=${CI_COMMIT_TAG#v}
     - make dists
-    # Flatten binaries for release
-    - mkdir -p release
-    - cp build/linux/amd64/fritz-mcp release/fritz-mcp-linux-amd64
-    - cp build/linux/arm64/fritz-mcp release/fritz-mcp-linux-arm64
-    - cp build/linux/arm/fritz-mcp release/fritz-mcp-linux-arm
-    - cp build/linux/386/fritz-mcp release/fritz-mcp-linux-386
-    - cp build/darwin/amd64/fritz-mcp release/fritz-mcp-darwin-amd64
-    - cp build/darwin/arm64/fritz-mcp release/fritz-mcp-darwin-arm64
-    - cp build/windows/amd64/fritz-mcp.exe release/fritz-mcp-windows-amd64.exe
-    - cp build/windows/arm64/fritz-mcp.exe release/fritz-mcp-windows-arm64.exe
-    - cp build/wasi/wasm/fritz-mcp.wasm release/fritz-mcp-wasi.wasm
-    - (cd release && sha256sum fritz-mcp-* > SHA256SUMS)
+    - make release-artifacts
     # Install cosign for signing
     - apt-get update && apt-get install -y curl
     - curl -sSL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o /usr/local/bin/cosign

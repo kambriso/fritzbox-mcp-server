@@ -25,25 +25,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
-          check-latest: true
+          go-version: '1.25.6'
+          check-latest: false
 
       - name: Build release binaries
         run: make dists
 
       - name: Prepare release files
-        run: |
-          mkdir -p release
-          cp build/linux/amd64/fritz-mcp release/fritz-mcp-linux-amd64
-          cp build/linux/arm64/fritz-mcp release/fritz-mcp-linux-arm64
-          cp build/linux/386/fritz-mcp release/fritz-mcp-linux-386
-          cp build/linux/arm/fritz-mcp release/fritz-mcp-linux-arm
-          cp build/darwin/amd64/fritz-mcp release/fritz-mcp-darwin-amd64
-          cp build/darwin/arm64/fritz-mcp release/fritz-mcp-darwin-arm64
-          cp build/windows/amd64/fritz-mcp.exe release/fritz-mcp-windows-amd64.exe
-          cp build/windows/arm64/fritz-mcp.exe release/fritz-mcp-windows-arm64.exe
-          cp build/wasi/wasm/fritz-mcp.wasm release/fritz-mcp.wasm
-          cd release && sha256sum fritz-mcp-* > SHA256SUMS
+        run: make release-artifacts
 
       - name: Generate hashes for SLSA provenance
         id: hash

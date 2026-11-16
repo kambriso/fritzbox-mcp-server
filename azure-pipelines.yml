@@ -1,0 +1,38 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+  tags:
+    include:
+      - v*
+
+pool:
+  vmImage: ubuntu-latest
+
+container: golang:1.25.6-bookworm
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 0
+    fetchTags: true
+
+  - script: |
+      go version
+      test "$(go env GOVERSION)" = go1.25.6
+      make build
+      make test
+    displayName: Build and test with pinned Go toolchain
+
+  - script: make release-artifacts
+    displayName: Build canonical release artifacts
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish release artifacts
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+    inputs:
+      targetPath: $(Build.SourcesDirectory)/release
+      artifact: release-artifacts
+      publishLocation: pipeline

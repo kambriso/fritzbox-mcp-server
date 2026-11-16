@@ -1,0 +1,83 @@
+= Azure Pipelines setup
+
+`azure-pipelines.yml` builds the canonical release artifact set with the pinned upstream Go 1.25.6 toolchain.
+Normal `main` runs build and test the project; tags matching `v*` additionally publish the `release-artifacts` pipeline artifact.
+
+== Repository identity
+
+The canonical source is `https://github.com/kambriso/fritzbox-mcp-server`.
+Create or import an Azure Repos repository named `fritzbox-mcp-server`; do not reuse the unrelated `HelloWorld` proof-of-concept repository as source.
+The Azure repository is a mirror, not a new canonical source.
+
+Set the deployment-specific values before running the examples:
+
+[source,bash]
+----
+export AZURE_ORGANIZATION=<organization>
+export AZURE_PROJECT=<project>
+export AZURE_REPOSITORY=fritzbox-mcp-server
+----
+
+Authenticate with Microsoft Entra ID, then create and import the repository:
+
+[source,bash]
+----
+az login
+az extension add --name azure-devops
+az devops configure --defaults \
+  organization="https://dev.azure.com/${AZURE_ORGANIZATION}/" \
+  project="${AZURE_PROJECT}"
+
+az repos create --name "${AZURE_REPOSITORY}"
+az repos import create \
+  --repository "${AZURE_REPOSITORY}" \
+  --git-source-url https://github.com/kambriso/fritzbox-mcp-server.git
+----
+
+The import operation is intended for initial setup. For subsequent releases, mirror the canonical refs and tags from an authenticated automation job or a controlled local mirror. Never use `git push --mirror` against a non-dedicated Azure repository because it removes target-only refs.
+
+== Pipeline creation
+
+After `azure-pipelines.yml` is present in the Azure repository, create the pipeline without queuing a premature run:
+
+[source,bash]
+----
+az pipelines create \
+  --name fritzbox-mcp-server \
+  --repository "${AZURE_REPOSITORY}" \
+  --repository-type tfsgit \
+  --branch main \
+  --yml-path azure-pipelines.yml \
+  --skip-first-run true
+----
+
+Configure `main` build validation as an Azure Repos branch policy. Azure Repos does not use a YAML `pr` trigger; its pull-request validation is configured through branch policies.
+
+== Release run
+
+Mirror the exact canonical release tag into Azure Repos. A tag matching `v*` triggers the release steps and publishes one pipeline artifact named `release-artifacts` containing:
+
+* Linux: amd64, arm64, 386, arm
+* macOS: amd64, arm64
+* Windows: amd64, arm64
+* WASI: wasm
+* `SHA256SUMS`
+
+The pipeline checks out full history and tags so `git describe` and `SOURCE_DATE_EPOCH` resolve to the same values on every forge.
+
+== Three-forge verification
+
+Install and authenticate `gh`, `glab`, and Azure CLI with the `azure-devops` extension. Record the Azure run ID for the tagged build, then run:
+
+[source,bash]
+----
+make verify-reproducible-three-forge \
+  TAG=<tag> \
+  AZURE_ORGANIZATION="${AZURE_ORGANIZATION}" \
+  AZURE_PROJECT="${AZURE_PROJECT}" \
+  AZURE_RUN_ID=<run-id>
+----
+
+The command downloads all three checksum manifests, rejects missing or unexpected artifacts, and compares every digest. A mismatch prints a unified diff and exits nonzero.
+
+Azure pipeline artifacts currently carry checksums but no project-generated SLSA provenance or Cosign signature. Do not claim an Azure SLSA level unless a trusted builder integration and its verification procedure are added and validated separately.
