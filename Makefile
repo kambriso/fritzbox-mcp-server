@@ -369,14 +369,14 @@ deps: ## List dependencies
 # SLSA verification
 GITHUB_REPO ?= kambriso/fritzbox-mcp-server
 GITLAB_REPO ?= kambriso/fritzbox-mcp-server
-AZURE_ORGANIZATION ?=
-AZURE_PROJECT ?=
+AZURE_ORGANIZATION ?= jochenhinrichsen
+AZURE_PROJECT ?= Fritzbox
 AZURE_RUN_ID ?=
 AZURE_ARTIFACT ?= release-artifacts
 VERIFY_DIR ?= $(BUILD_DIR)/verify
 
 .PHONY: verify-reproducible-three-forge
-verify-reproducible-three-forge: ## Compare GitHub, GitLab, and Azure checksums (use TAG and Azure variables)
+verify-reproducible-three-forge: ## Compare GitHub, GitLab, and Azure checksums (use TAG and AZURE_RUN_ID)
 	TAG=$(TAG) \
 	GITHUB_REPO=$(GITHUB_REPO) \
 	GITLAB_REPO=$(GITLAB_REPO) \

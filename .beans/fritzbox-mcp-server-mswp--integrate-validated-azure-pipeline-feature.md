@@ -1,14 +1,12 @@
 ---
 # fritzbox-mcp-server-mswp
 title: Integrate validated Azure pipeline feature
-status: todo
+status: in-progress
 type: task
 priority: normal
 created_at: 2026-11-17T08:34:33Z
-updated_at: 2026-11-17T08:34:33Z
+updated_at: 2026-11-17T09:00:01Z
 parent: fritzbox-mcp-server-qce6
-blocked_by:
-    - fritzbox-mcp-server-ixcb
 ---
 
 ## Goal

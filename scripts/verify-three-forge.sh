@@ -108,7 +108,7 @@ gh release download "$TAG" \
 
 glab release download "$TAG" \
   --repo "$GITLAB_REPO" \
-  --name SHA256SUMS \
+  --asset-name SHA256SUMS \
   --dir "$gitlab_dir"
 
 az pipelines runs artifact download \

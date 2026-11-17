@@ -9,20 +9,33 @@ The canonical source is `https://github.com/kambriso/fritzbox-mcp-server`.
 Create or import an Azure Repos repository named `fritzbox-mcp-server`; do not reuse the unrelated `HelloWorld` proof-of-concept repository as source.
 The Azure repository is a mirror, not a new canonical source.
 
-Set the deployment-specific values before running the examples:
+The active Azure DevOps target is the private `Fritzbox` project in the
+`jochenhinrichsen` organization:
 
 [source,bash]
 ----
-export AZURE_ORGANIZATION=<organization>
-export AZURE_PROJECT=<project>
+export AZURE_ORGANIZATION=jochenhinrichsen
+export AZURE_PROJECT=Fritzbox
 export AZURE_REPOSITORY=fritzbox-mcp-server
 ----
 
-Authenticate with Microsoft Entra ID, then create and import the repository:
+Authenticate either with Microsoft Entra ID (`az login`) or, when only a
+personal access token is available, without writing the token into this
+repository or a Git remote:
 
 [source,bash]
 ----
-az login
+read -rsp 'Azure DevOps PAT: ' AZURE_DEVOPS_EXT_PAT
+export AZURE_DEVOPS_EXT_PAT
+az devops login --organization "https://dev.azure.com/${AZURE_ORGANIZATION}"
+unset AZURE_DEVOPS_EXT_PAT
+----
+
+Then configure Azure DevOps and create/import the repository if it does not
+already exist:
+
+[source,bash]
+----
 az extension add --name azure-devops
 az devops configure --defaults \
   organization="https://dev.azure.com/${AZURE_ORGANIZATION}/" \
@@ -73,11 +86,18 @@ Install and authenticate `gh`, `glab`, and Azure CLI with the `azure-devops` ext
 ----
 make verify-reproducible-three-forge \
   TAG=<tag> \
-  AZURE_ORGANIZATION="${AZURE_ORGANIZATION}" \
-  AZURE_PROJECT="${AZURE_PROJECT}" \
   AZURE_RUN_ID=<run-id>
 ----
 
-The command downloads all three checksum manifests, rejects missing or unexpected artifacts, and compares every digest. A mismatch prints a unified diff and exits nonzero.
+The Makefile defaults target the organization and project above. Override
+`AZURE_ORGANIZATION` and `AZURE_PROJECT` for another deployment. The command
+downloads all three checksum manifests, rejects missing or unexpected
+artifacts, and compares every digest. A mismatch prints a unified diff and
+exits nonzero.
+
+The validated reference run used tag `v0.8.2-rc.2` at commit
+`cd46364eaee8189ccbfcd023175d256e5a4ee1a8`: GitHub Actions run
+`44050227463`, GitLab pipeline `3077940519`, and Azure Pipeline run `15`
+produced identical checksums for all nine binaries.
 
 Azure pipeline artifacts currently carry checksums but no project-generated SLSA provenance or Cosign signature. Do not claim an Azure SLSA level unless a trusted builder integration and its verification procedure are added and validated separately.
