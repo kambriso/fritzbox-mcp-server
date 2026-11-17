@@ -1,11 +1,11 @@
 ---
 # fritzbox-mcp-server-qce6
-title: add Azure Pipelines as third reproducible-build platform
+title: Azure Pipelines cross-forge reproducible builds
 status: in-progress
-type: task
+type: epic
 priority: normal
 created_at: 2026-11-16T11:15:47Z
-updated_at: 2026-11-16T14:47:21Z
+updated_at: 2026-11-17T08:34:33Z
 ---
 
 ## Goal
